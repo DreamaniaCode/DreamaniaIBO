@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <!-- Background Glow -->
+    <radialGradient id="bgGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#9333ea" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Outer Prism Gradient -->
+    <linearGradient id="prismGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#c084fc"/>
+      <stop offset="40%" stop-color="#9333ea"/>
+      <stop offset="100%" stop-color="#581c87"/>
+    </linearGradient>
+
+    <!-- Inner Core Gradient -->
+    <linearGradient id="coreGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3b0764"/>
+      <stop offset="50%" stop-color="#7e22ce"/>
+      <stop offset="100%" stop-color="#d8b4fe"/>
+    </linearGradient>
+
+    <!-- Play Arrow Accent -->
+    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f43f5e"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+
+    <!-- Shadow filter -->
+    <filter id="glowFilter" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+
+  <!-- Ambient Glow -->
+  <circle cx="100" cy="100" r="95" fill="url(#bgGlow)"/>
+
+  <!-- Outer Hexagonal / Rounded Shield -->
+  <rect x="25" y="25" width="150" height="150" rx="36" fill="url(#prismGrad)" filter="url(#glowFilter)"/>
+
+  <!-- Inner Dark Glass Inset -->
+  <rect x="31" y="31" width="138" height="138" rx="30" fill="#0d081f" fill-opacity="0.94"/>
+
+  <!-- Geometric Polygonal Shards -->
+  <path d="M42 55 L90 33 L145 50 L120 95 Z" fill="#9333ea" fill-opacity="0.18"/>
+  <path d="M158 135 L115 167 L55 150 L80 105 Z" fill="#c084fc" fill-opacity="0.15"/>
+
+  <!-- Stylized "D" Body -->
+  <path d="M62 58 C62 53.5 65.5 50 70 50 L108 50 C136 50 154 68 154 100 C154 132 136 150 108 150 L70 150 C65.5 150 62 146.5 62 142 Z" 
+        fill="url(#coreGrad)"/>
+
+  <!-- "D" Inner Cutout / Negative Space -->
+  <path d="M84 72 L105 72 C122 72 132 83 132 100 C132 117 122 128 105 128 L84 128 Z" 
+        fill="#0d081f"/>
+
+  <!-- Center Forward "Play" Symbol (IPTV streaming motif) -->
+  <path d="M96 84 C96 80.5 99.8 78.4 102.8 80.2 L127 96.2 C129.8 98 129.8 102 127 103.8 L102.8 119.8 C99.8 121.6 96 119.5 96 116 Z" 
+        fill="url(#accentGrad)" filter="url(#glowFilter)"/>
+
+  <!-- High-tech Antenna / Signal Rays on Top Right -->
+  <circle cx="154" cy="46" r="5" fill="#c084fc"/>
+  <path d="M145 36 A 15 15 0 0 1 165 56" fill="none" stroke="#a855f7" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+  <path d="M138 28 A 25 25 0 0 1 173 63" fill="none" stroke="#c084fc" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+</svg>

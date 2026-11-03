@@ -1,13 +1,137 @@
 <?php
 /**
  * Dreamania IBO Pro - Web Administration Portal
- * Sleek, high-performance, dark-themed control panel.
+ * Sleek, high-performance IPTV control panel with 10 modern themes.
  */
 
 declare(strict_types=1);
 session_start();
 
 require_once __DIR__ . '/db.php';
+
+// Available Themes Definition
+$themes = [
+    'purple'    => [
+        'name'    => 'Royal Purple',
+        'badge'   => 'Default',
+        'icon'    => '🟣',
+        'desc'    => 'Dreamania signature violet & electric purple',
+        'primary' => '#9333ea',
+        'card'    => '#120d24',
+        'bg'      => '#090614',
+        'accent'  => '#c084fc',
+    ],
+    'midnight'  => [
+        'name'    => 'Obsidian Crimson',
+        'badge'   => 'Classic',
+        'icon'    => '🔴',
+        'desc'    => 'Obsidian black with deep crimson highlights',
+        'primary' => '#e11d48',
+        'card'    => '#111827',
+        'bg'      => '#0b0f19',
+        'accent'  => '#fb7185',
+    ],
+    'emerald'   => [
+        'name'    => 'Cyber Matrix',
+        'badge'   => 'Tech',
+        'icon'    => '🟢',
+        'desc'    => 'Cyberpunk matrix emerald & glowing mint',
+        'primary' => '#059669',
+        'card'    => '#091f16',
+        'bg'      => '#04120c',
+        'accent'  => '#34d399',
+    ],
+    'sapphire'  => [
+        'name'    => 'Oceanic Sapphire',
+        'badge'   => 'Vivid',
+        'icon'    => '🔵',
+        'desc'    => 'Deep oceanic navy & vivid sapphire blue',
+        'primary' => '#2563eb',
+        'card'    => '#0b1a30',
+        'bg'      => '#050e1c',
+        'accent'  => '#60a5fa',
+    ],
+    'cyberpunk' => [
+        'name'    => 'Neo Synthwave',
+        'badge'   => 'Vibrant',
+        'icon'    => '💖',
+        'desc'    => 'Synthwave hot pink & electric cyan glow',
+        'primary' => '#ec4899',
+        'card'    => '#160c2b',
+        'bg'      => '#0c0617',
+        'accent'  => '#22d3ee',
+    ],
+    'amber'     => [
+        'name'    => 'Sunset Gold',
+        'badge'   => 'Warm',
+        'icon'    => '🟡',
+        'desc'    => 'Warm amber, golden honey & dusk highlights',
+        'primary' => '#d97706',
+        'card'    => '#1c1308',
+        'bg'      => '#100b05',
+        'accent'  => '#fbbf24',
+    ],
+    'aurora'    => [
+        'name'    => 'Glacial Aurora',
+        'badge'   => 'Cool',
+        'icon'    => '🌌',
+        'desc'    => 'Northern lights teal & indigo space glow',
+        'primary' => '#0891b2',
+        'card'    => '#0c1e2b',
+        'bg'      => '#061118',
+        'accent'  => '#818cf8',
+    ],
+    'stealth'   => [
+        'name'    => 'Titanium Stealth',
+        'badge'   => 'Clean',
+        'icon'    => '⚪',
+        'desc'    => 'Minimalist monochrome titanium & silver slate',
+        'primary' => '#52525b',
+        'card'    => '#141418',
+        'bg'      => '#0a0a0c',
+        'accent'  => '#f4f4f5',
+    ],
+    'rosegold'  => [
+        'name'    => 'Imperial Rose',
+        'badge'   => 'Luxe',
+        'icon'    => '🌸',
+        'desc'    => 'Lustrous rose gold & burgundy copper',
+        'primary' => '#e11d48',
+        'card'    => '#1f1019',
+        'bg'      => '#12090e',
+        'accent'  => '#fda4af',
+    ],
+    'carbon'    => [
+        'name'    => 'OLED Ultra Black',
+        'badge'   => 'OLED',
+        'icon'    => '⚡',
+        'desc'    => 'True zero pitch black with ultraviolet beam',
+        'primary' => '#7c3aed',
+        'card'    => '#08080a',
+        'bg'      => '#000000',
+        'accent'  => '#d8b4fe',
+    ],
+];
+$allowedThemes = array_keys($themes);
+
+// Resolve Active Theme (Cookie -> DB -> 'purple')
+$cookieTheme = $_COOKIE['dreamania_theme'] ?? null;
+$dbTheme = DB::getSetting('panel_theme', 'purple');
+$currentTheme = ($cookieTheme && in_array($cookieTheme, $allowedThemes, true))
+    ? $cookieTheme
+    : (in_array($dbTheme, $allowedThemes, true) ? $dbTheme : 'purple');
+
+// Quick theme switcher via GET
+if (isset($_GET['set_theme']) && in_array($_GET['set_theme'], $allowedThemes, true)) {
+    $selTheme = $_GET['set_theme'];
+    setcookie('dreamania_theme', $selTheme, time() + (86400 * 365), '/');
+    if (!empty($_SESSION['admin_logged'])) {
+        DB::setSetting('panel_theme', $selTheme);
+    }
+    $targetTab = isset($_GET['tab']) ? '?tab=' . urlencode($_GET['tab']) : '';
+    header("Location: index.php" . $targetTab);
+    exit;
+}
 
 // Handle CSRF Token
 if (empty($_SESSION['csrf_token'])) {
@@ -117,9 +241,23 @@ if ($isLogged && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     $errCode = $_FILES['apk_file']['error'] ?? 'Unknown';
                     throw new Exception("Upload error: code {$errCode}");
                 }
+            } elseif ($formType === 'set_active_theme') {
+                $themeToSet = trim($_POST['theme_name'] ?? '');
+                if (in_array($themeToSet, $allowedThemes, true)) {
+                    DB::setSetting('panel_theme', $themeToSet);
+                    setcookie('dreamania_theme', $themeToSet, time() + (86400 * 365), '/');
+                    $currentTheme = $themeToSet;
+                    $msg = "Theme changed to " . htmlspecialchars($themes[$themeToSet]['name']) . " and saved as default!";
+                    $msgType = "success";
+                }
             } elseif ($formType === 'save_settings') {
                 if (!empty($_POST['admin_password'])) {
                     DB::setSetting('admin_password', trim($_POST['admin_password']));
+                }
+                if (!empty($_POST['panel_theme']) && in_array($_POST['panel_theme'], $allowedThemes, true)) {
+                    DB::setSetting('panel_theme', trim($_POST['panel_theme']));
+                    setcookie('dreamania_theme', trim($_POST['panel_theme']), time() + (86400 * 365), '/');
+                    $currentTheme = trim($_POST['panel_theme']);
                 }
                 DB::setSetting('note_title', trim($_POST['note_title'] ?? ''));
                 DB::setSetting('note_content', trim($_POST['note_content'] ?? ''));
@@ -144,7 +282,7 @@ $settings = $isLogged ? DB::getAllSettings() : [];
 
 $activeTab = $_GET['tab'] ?? 'add';
 
-// APK File Status
+// APK File Status Check
 $apkPath = __DIR__ . '/data/app.apk';
 if (!file_exists($apkPath) && file_exists(__DIR__ . '/DreamaniaIBOPro.apk')) {
     $apkPath = __DIR__ . '/DreamaniaIBOPro.apk';
@@ -153,45 +291,41 @@ $apkFileExists = file_exists($apkPath) && filesize($apkPath) > 100000;
 $apkFileSize = $apkFileExists ? round(filesize($apkPath) / (1024 * 1024), 2) : 0;
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="<?= htmlspecialchars($currentTheme) ?>">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dreamania IBO Pro - Management Panel</title>
+<title>Dreamania IBO Pro - Enterprise IPTV Middleware</title>
+<link rel="icon" type="image/svg+xml" href="assets/img/logo.svg">
+<link rel="stylesheet" href="assets/css/themes.css">
 <style>
-:root {
-    --bg: #0b1120;
-    --card: #111827;
-    --card-hover: #172033;
-    --text: #f9fafb;
-    --muted: #94a3b8;
-    --border: #1e293b;
-    --primary: #bf1e2e;
-    --primary-dark: #380308;
-    --accent: #e11d48;
-    --success: #059669;
-    --error: #e11d48;
-}
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background: var(--bg);
+    background-color: var(--bg);
+    background-image: var(--bg-mesh);
+    background-attachment: fixed;
+    background-size: cover;
     color: var(--text);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
+
+/* Navbar */
 .navbar {
-    background: rgba(17, 24, 39, 0.95);
-    backdrop-filter: blur(10px);
+    background: rgba(14, 10, 26, 0.88);
+    backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--border);
-    padding: 14px 24px;
+    padding: 12px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: sticky;
     top: 0;
     z-index: 50;
+    transition: border-color 0.3s ease;
 }
 .brand {
     display: flex;
@@ -200,75 +334,93 @@ body {
     text-decoration: none;
     color: inherit;
 }
-.brand-logo {
+.brand-logo-img {
     width: 38px;
     height: 38px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 900;
-    font-size: 18px;
-    box-shadow: 0 4px 14px rgba(191, 30, 46, 0.4);
+    filter: drop-shadow(0 4px 10px var(--primary-glow));
+    transition: transform 0.25s ease;
+}
+.brand:hover .brand-logo-img {
+    transform: scale(1.08) rotate(-3deg);
 }
 .brand-name {
-    font-size: 19px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 800;
     letter-spacing: -0.5px;
+    color: var(--text);
 }
 .brand-badge {
-    background: rgba(191, 30, 46, 0.18);
-    color: #fb7185;
+    background: var(--badge-bg);
+    color: var(--badge-color);
+    border: 1px solid var(--badge-border);
     font-size: 11px;
-    padding: 2px 7px;
+    padding: 2px 8px;
     border-radius: 6px;
-    font-weight: 600;
-    border: 1px solid rgba(191, 30, 46, 0.3);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-left: 6px;
 }
 .nav-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
+.theme-select-wrapper {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+.theme-select {
+    padding: 7px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.theme-select:focus {
+    border-color: var(--border-focus);
+}
+
+/* Buttons */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
+    gap: 8px;
     padding: 9px 18px;
     font-size: 14px;
     font-weight: 600;
     border-radius: 8px;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.25s ease;
     text-decoration: none;
     color: #fff;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-    box-shadow: 0 4px 12px rgba(191, 30, 46, 0.25);
+    background: var(--primary-gradient);
+    box-shadow: 0 4px 14px var(--primary-glow);
 }
 .btn:hover {
-    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    background: var(--primary-gradient-hover);
     transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(191, 30, 46, 0.4);
+    box-shadow: 0 6px 20px var(--primary-glow);
 }
 .btn-secondary {
-    background: #1e293b;
+    background: rgba(255, 255, 255, 0.05);
     box-shadow: none;
     color: var(--muted);
+    border: 1px solid var(--border);
 }
 .btn-secondary:hover {
-    background: #334155;
-    color: #fff;
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--text);
     transform: none;
     box-shadow: none;
-}
-.btn-success {
-    background: #059669;
-    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
-}
-.btn-success:hover {
-    background: #047857;
+    border-color: var(--accent);
 }
 .btn-danger {
     background: #e11d48;
@@ -278,10 +430,12 @@ body {
     background: #be123c;
 }
 .btn-sm {
-    padding: 5px 10px;
+    padding: 6px 12px;
     font-size: 12px;
     border-radius: 6px;
 }
+
+/* Layout */
 .main-container {
     width: 100%;
     max-width: 1140px;
@@ -289,6 +443,8 @@ body {
     padding: 0 16px;
     flex: 1;
 }
+
+/* Stats */
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -303,6 +459,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    transition: border-color 0.3s;
 }
 .stat-label {
     font-size: 13px;
@@ -314,6 +471,8 @@ body {
     font-weight: 800;
     color: var(--text);
 }
+
+/* Tabs */
 .tabs-nav {
     display: flex;
     gap: 8px;
@@ -325,7 +484,7 @@ body {
     overflow-x: auto;
 }
 .tab-link {
-    padding: 8px 16px;
+    padding: 9px 18px;
     font-size: 14px;
     font-weight: 600;
     color: var(--muted);
@@ -334,13 +493,17 @@ body {
     transition: all 0.2s ease;
     white-space: nowrap;
 }
-.tab-link.active, .tab-link:hover {
+.tab-link:hover {
     color: #fff;
-    background: rgba(191, 30, 46, 0.2);
+    background: var(--badge-bg);
 }
 .tab-link.active {
-    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: #fff;
+    background: var(--primary-gradient);
+    box-shadow: 0 3px 12px var(--primary-glow);
 }
+
+/* Cards & Grid */
 .grid-2 {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -355,6 +518,7 @@ body {
     border-radius: 14px;
     padding: 24px;
     box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+    transition: border-color 0.3s, background 0.3s;
 }
 .card h2 {
     font-size: 18px;
@@ -379,16 +543,18 @@ input[type=text], input[type=password], input[type=url], input[type=file], selec
     padding: 10px 14px;
     border-radius: 8px;
     border: 1px solid var(--border);
-    background: #0f172a;
+    background: rgba(0, 0, 0, 0.25);
     color: var(--text);
     font-size: 14px;
     outline: none;
-    transition: border 0.2s ease;
+    transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 input:focus, select:focus, textarea:focus {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(191, 30, 46, 0.2);
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px var(--primary-glow);
 }
+
+/* Alerts */
 .alert {
     padding: 12px 16px;
     border-radius: 8px;
@@ -400,6 +566,8 @@ input:focus, select:focus, textarea:focus {
 }
 .alert-success { background: #064e3b; color: #a7f3d0; border: 1px solid #059669; }
 .alert-error { background: #4c0519; color: #fecdd3; border: 1px solid #e11d48; }
+
+/* Tables */
 .table-wrapper {
     overflow-x: auto;
     border: 1px solid var(--border);
@@ -412,7 +580,7 @@ table {
     text-align: left;
 }
 th {
-    background: #1e293b;
+    background: rgba(255, 255, 255, 0.04);
     padding: 12px 14px;
     font-weight: 600;
     color: var(--muted);
@@ -426,6 +594,8 @@ td {
 tr:hover td {
     background: var(--card-hover);
 }
+
+/* Badges */
 .badge {
     display: inline-block;
     padding: 3px 8px;
@@ -434,22 +604,259 @@ tr:hover td {
     font-weight: 700;
     text-transform: uppercase;
 }
-.badge-ibo { background: rgba(191, 30, 46, 0.2); color: #fb7185; border: 1px solid rgba(191, 30, 46, 0.4); }
+.badge-ibo { background: var(--badge-bg); color: var(--badge-color); border: 1px solid var(--badge-border); }
 .badge-m3u { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
 .badge-active { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
 .badge-missing { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
 .mac-badge {
     font-family: monospace;
     font-size: 13px;
-    color: #38bdf8;
-    background: rgba(56, 189, 248, 0.1);
-    padding: 2px 6px;
+    color: var(--accent);
+    background: var(--badge-bg);
+    padding: 2px 7px;
     border-radius: 4px;
+    border: 1px solid var(--badge-border);
 }
-.login-box {
-    max-width: 420px;
-    margin: 40px auto;
+
+/* Theme Gallery */
+.theme-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
 }
+.theme-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+.theme-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent);
+}
+.theme-card.active {
+    border: 2px solid var(--primary);
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+.theme-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.theme-title {
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.swatches {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.swatch {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+.theme-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+    min-height: 34px;
+}
+
+/* ======================================================== */
+/* High-End Redesigned Login Page UI                        */
+/* ======================================================== */
+.login-wrapper {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 16px;
+}
+.login-container {
+    width: 100%;
+    max-width: 440px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.login-header {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+.login-logo-aura {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.login-logo-aura::before {
+    content: '';
+    position: absolute;
+    inset: -12px;
+    background: var(--primary-glow);
+    filter: blur(28px);
+    border-radius: 50%;
+    opacity: 0.85;
+    animation: auraPulse 3.5s ease-in-out infinite alternate;
+}
+@keyframes auraPulse {
+    from { transform: scale(0.9); opacity: 0.55; }
+    to { transform: scale(1.18); opacity: 0.95; }
+}
+.login-logo-img {
+    width: 82px;
+    height: 82px;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.6));
+}
+.login-title {
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+.login-title span {
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.login-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    max-width: 320px;
+    line-height: 1.5;
+}
+.login-glass-card {
+    background: var(--card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    position: relative;
+    overflow: hidden;
+}
+.login-glass-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-gradient);
+}
+.input-with-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.input-icon {
+    position: absolute;
+    left: 14px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+    font-size: 16px;
+}
+.input-with-icon input {
+    padding-left: 42px;
+    padding-right: 42px;
+    font-size: 15px;
+    height: 46px;
+}
+.password-toggle {
+    position: absolute;
+    right: 12px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 14px;
+    padding: 4px;
+}
+.password-toggle:hover {
+    color: var(--text);
+}
+.trust-badges {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-top: 18px;
+}
+.trust-badge-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.client-download-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+.theme-preview-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.35);
+    border-radius: 30px;
+    border: 1px solid var(--border);
+}
+.theme-pill-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    padding: 4px 10px;
+    border-radius: 20px;
+    color: var(--muted);
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.theme-pill-btn:hover, .theme-pill-btn.active {
+    background: var(--badge-bg);
+    border-color: var(--badge-border);
+    color: #fff;
+}
+
+/* Footer */
 .footer {
     text-align: center;
     padding: 20px;
@@ -458,7 +865,7 @@ tr:hover td {
     border-top: 1px solid var(--border);
     margin-top: auto;
 }
-.footer a { color: #38bdf8; text-decoration: none; }
+.footer a { color: var(--accent); text-decoration: none; }
 </style>
 </head>
 <body>
@@ -466,16 +873,28 @@ tr:hover td {
 <!-- Navbar -->
 <header class="navbar">
     <a href="index.php" class="brand">
-        <div class="brand-logo">D</div>
+        <img src="assets/img/logo.svg" alt="Dreamania Logo" class="brand-logo-img">
         <div>
             <span class="brand-name">Dreamania IBO Pro</span>
             <span class="brand-badge">PRO V10</span>
         </div>
     </a>
     <div class="nav-actions">
+        <!-- Theme Switcher Dropdown -->
+        <div class="theme-select-wrapper">
+            <select class="theme-select" id="themeQuickSelect" onchange="applyTheme(this.value)" title="Choose Theme">
+                <?php foreach ($themes as $tKey => $t): ?>
+                    <option value="<?= $tKey ?>" <?= $tKey === $currentTheme ? 'selected' : '' ?>>
+                        <?= $t['icon'] ?> <?= htmlspecialchars($t['name']) ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+        </div>
+
         <?php if ($apkFileExists): ?>
             <a href="download" class="btn btn-secondary btn-sm" title="Download APK for TV/Mobile">📲 Download APK</a>
         <?php endif; ?>
+
         <?php if ($isLogged): ?>
             <form method="post" style="display:inline;">
                 <input type="hidden" name="action" value="logout">
@@ -494,28 +913,73 @@ tr:hover td {
     <?php endif; ?>
 
     <?php if (!$isLogged): ?>
-        <!-- Login Form -->
-        <div class="card login-box">
-            <h2 style="justify-content:center; margin-bottom: 24px;">Admin Portal Login</h2>
-            <form method="post">
-                <input type="hidden" name="action" value="login">
-                <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
-                <div class="form-group">
-                    <label for="access_password">Access Password</label>
-                    <input type="password" id="access_password" name="access_password" placeholder="Enter password (default: 200600)" required autofocus>
+        <!-- ======================================================== -->
+        <!-- Redesigned High-End Login UI                             -->
+        <!-- ======================================================== -->
+        <div class="login-wrapper">
+            <div class="login-container">
+                <div class="login-header">
+                    <div class="login-logo-aura">
+                        <img src="assets/img/logo.svg" alt="Dreamania Logo" class="login-logo-img">
+                    </div>
+                    <h1 class="login-title">DREAMANIA <span>IBO PRO</span></h1>
+                    <p class="login-subtitle">Enterprise IPTV Middleware & Device Control System</p>
                 </div>
-                <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Login</button>
-            </form>
 
-            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center;">
-                <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Looking for the client app for TV or Android?</p>
-                <a href="download" class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
-                    📲 Download Dreamania IBO Pro APK
-                </a>
+                <div class="login-glass-card">
+                    <form method="post">
+                        <input type="hidden" name="action" value="login">
+                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                        
+                        <div class="form-group" style="margin-bottom: 20px;">
+                            <label for="access_password">Portal Master Key</label>
+                            <div class="input-with-icon">
+                                <span class="input-icon">🔒</span>
+                                <input type="password" id="access_password" name="access_password" placeholder="Enter password (default: 200600)" required autofocus>
+                                <button type="button" class="password-toggle" onclick="togglePasswordVisibility()" title="Show/Hide Password">👁️</button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn" style="width: 100%; height: 46px; font-size: 15px;">
+                            Unlock Management Portal ➔
+                        </button>
+                    </form>
+
+                    <div class="trust-badges">
+                        <div class="trust-badge-item">⚡ Sub-ms JSON API</div>
+                        <div class="trust-badge-item">🛡️ AES-256 Encrypted</div>
+                        <div class="trust-badge-item">🌐 Smart DNS Cluster</div>
+                        <div class="trust-badge-item">📺 Android TV & Mobile</div>
+                    </div>
+                </div>
+
+                <!-- Client APK Download Box -->
+                <div class="client-download-box">
+                    <div style="text-align: left;">
+                        <div style="font-weight: 700; font-size: 14px; color: var(--text);">Client App Available</div>
+                        <div style="font-size: 12px; color: var(--muted);">Dreamania IBO Pro APK (TV & Phone)</div>
+                    </div>
+                    <a href="download" class="btn btn-secondary btn-sm" style="flex-shrink: 0;">
+                        📲 Download APK
+                    </a>
+                </div>
+
+                <!-- Quick Theme Preview Pill Bar -->
+                <div class="theme-preview-bar">
+                    <span style="font-size: 11px; color: var(--muted); font-weight: 600; margin-right: 4px;">THEMES:</span>
+                    <?php foreach ($themes as $tKey => $t): ?>
+                        <button type="button" class="theme-pill-btn <?= $tKey === $currentTheme ? 'active' : '' ?>" onclick="applyTheme('<?= $tKey ?>')">
+                            <?= $t['icon'] ?> <?= htmlspecialchars($t['name']) ?>
+                        </button>
+                    <?php endforeach; ?>
+                </div>
             </div>
         </div>
+
     <?php else: ?>
-        <!-- Dashboard & Navigation -->
+        <!-- ======================================================== -->
+        <!-- Dashboard & Navigation (Authenticated)                   -->
+        <!-- ======================================================== -->
         <div class="stats-grid">
             <div class="stat-card">
                 <span class="stat-label">Total Connected Devices</span>
@@ -545,6 +1009,7 @@ tr:hover td {
             <a href="?tab=add" class="tab-link <?= $activeTab === 'add' ? 'active' : '' ?>">⚡ Add Users</a>
             <a href="?tab=playlists" class="tab-link <?= $activeTab === 'playlists' ? 'active' : '' ?>">📋 Manage Playlists (<?= count($playlists) ?>)</a>
             <a href="?tab=dns" class="tab-link <?= $activeTab === 'dns' ? 'active' : '' ?>">🌐 DNS Servers (<?= count($dnsList) ?>)</a>
+            <a href="?tab=themes" class="tab-link <?= $activeTab === 'themes' ? 'active' : '' ?>">🎨 10 Modern Themes</a>
             <a href="?tab=settings" class="tab-link <?= $activeTab === 'settings' ? 'active' : '' ?>">⚙️ Settings & APK</a>
         </nav>
 
@@ -716,17 +1181,78 @@ tr:hover td {
                 </div>
             </div>
 
+        <?php elseif ($activeTab === 'themes'): ?>
+            <!-- ======================================================== -->
+            <!-- 10 Modern Design Themes Gallery                          -->
+            <!-- ======================================================== -->
+            <div class="card" style="margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 20px;">
+                    <div>
+                        <h2>🎨 Visual Theme Studio (10 Modern Themes)</h2>
+                        <p style="font-size: 13px; color: var(--muted); margin-top: 4px;">
+                            Switch themes instantly with real-time preview, or save any theme as the system default.
+                        </p>
+                    </div>
+                    <div>
+                        <span class="badge badge-active" style="padding: 6px 12px; font-size: 12px;">
+                            Active Theme: <?= htmlspecialchars($themes[$currentTheme]['name']) ?>
+                        </span>
+                    </div>
+                </div>
+
+                <div class="theme-grid">
+                    <?php foreach ($themes as $tKey => $t): ?>
+                        <div class="theme-card <?= $tKey === $currentTheme ? 'active' : '' ?>">
+                            <div class="theme-header">
+                                <span class="theme-title">
+                                    <span><?= $t['icon'] ?></span>
+                                    <span><?= htmlspecialchars($t['name']) ?></span>
+                                </span>
+                                <span class="brand-badge"><?= htmlspecialchars($t['badge']) ?></span>
+                            </div>
+
+                            <p class="theme-desc"><?= htmlspecialchars($t['desc']) ?></p>
+
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 8px; border-top: 1px solid var(--border);">
+                                <span style="font-size: 11px; color: var(--muted); font-weight: 600;">PALETTE:</span>
+                                <div class="swatches">
+                                    <span class="swatch" style="background: <?= $t['bg'] ?>;" title="Background"></span>
+                                    <span class="swatch" style="background: <?= $t['card'] ?>;" title="Card"></span>
+                                    <span class="swatch" style="background: <?= $t['primary'] ?>;" title="Primary"></span>
+                                    <span class="swatch" style="background: <?= $t['accent'] ?>;" title="Accent"></span>
+                                </div>
+                            </div>
+
+                            <div style="display: flex; gap: 8px; margin-top: 4px;">
+                                <button type="button" class="btn btn-secondary btn-sm" style="flex: 1;" onclick="applyTheme('<?= $tKey ?>')">
+                                    Preview
+                                </button>
+                                
+                                <form method="post" style="flex: 1.3;">
+                                    <input type="hidden" name="form_type" value="set_active_theme">
+                                    <input type="hidden" name="theme_name" value="<?= $tKey ?>">
+                                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                                    <button type="submit" class="btn btn-sm" style="width: 100%;">
+                                        <?= $tKey === $currentTheme ? '✓ Default' : 'Set Default' ?>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+
         <?php elseif ($activeTab === 'settings'): ?>
             <!-- Panel & App Settings -->
-            <div style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">
+            <div style="max-width: 740px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">
                 <!-- APK Hosting Card -->
                 <div class="card">
                     <h2>📦 APK Hosting on Coolify</h2>
                     <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
-                        Host your <code>DreamaniaIBOPro.apk</code> directly on this domain inside your Coolify persistent volume (no GitHub required).
+                        Host your <code>DreamaniaIBOPro.apk</code> directly on this domain inside your Coolify persistent volume (no GitHub upload needed).
                     </p>
 
-                    <div style="background: #0f172a; padding: 14px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 18px;">
+                    <div style="background: rgba(0, 0, 0, 0.25); padding: 14px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 18px;">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                             <span style="font-size: 13px; color: var(--muted);">Status:</span>
                             <?php if ($apkFileExists): ?>
@@ -737,7 +1263,7 @@ tr:hover td {
                         </div>
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <span style="font-size: 13px; color: var(--muted);">Direct URL:</span>
-                            <a href="download" target="_blank" style="font-family: monospace; font-size: 13px; color: #38bdf8;">/download</a>
+                            <a href="download" target="_blank" style="font-family: monospace; font-size: 13px; color: var(--accent);">/download</a>
                         </div>
                     </div>
 
@@ -761,6 +1287,17 @@ tr:hover td {
                         <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
                         
                         <div class="form-group">
+                            <label for="panel_theme">Default Panel Theme</label>
+                            <select id="panel_theme" name="panel_theme">
+                                <?php foreach ($themes as $tKey => $t): ?>
+                                    <option value="<?= $tKey ?>" <?= ($settings['panel_theme'] ?? 'purple') === $tKey ? 'selected' : '' ?>>
+                                        <?= $t['icon'] ?> <?= htmlspecialchars($t['name']) ?> (<?= htmlspecialchars($t['badge']) ?>)
+                                    </option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
                             <label for="admin_password">Admin Portal Password</label>
                             <input type="password" id="admin_password" name="admin_password" value="<?= htmlspecialchars($settings['admin_password'] ?? '200600') ?>">
                         </div>
@@ -781,7 +1318,7 @@ tr:hover td {
                             <input type="text" id="app_version" name="app_version" value="<?= htmlspecialchars($settings['app_version'] ?? '1.0.0') ?>">
                         </div>
                         <div class="form-group">
-                            <label for="apk_link">APK Download Link (auto-filled if left empty)</label>
+                            <label for="apk_link">APK Download Link (auto-filled if empty)</label>
                             <input type="url" id="apk_link" name="apk_link" placeholder="https://dmibo.myskillscloud.com/download" value="<?= htmlspecialchars($settings['apk_link'] ?? '') ?>">
                         </div>
                         <button type="submit" class="btn" style="width: 100%;">Save Settings</button>
@@ -793,8 +1330,32 @@ tr:hover td {
 </main>
 
 <footer class="footer">
-    &copy; <?= date('Y') ?> Dreamania IBO Pro &bull; High Performance IPTV Management Panel
+    &copy; <?= date('Y') ?> Dreamania IBO Pro &bull; High Performance IPTV Middleware &bull; Powered by Coolify
 </footer>
+
+<script>
+function applyTheme(themeName) {
+    document.documentElement.setAttribute('data-theme', themeName);
+    document.cookie = "dreamania_theme=" + encodeURIComponent(themeName) + "; path=/; max-age=31536000; SameSite=Lax";
+    const select = document.getElementById('themeQuickSelect');
+    if (select) select.value = themeName;
+
+    // Update pill buttons if present
+    document.querySelectorAll('.theme-pill-btn').forEach(btn => {
+        if (btn.textContent.includes(themeName)) {
+            btn.classList.add('active');
+        } else {
+            btn.classList.remove('active');
+        }
+    });
+}
+
+function togglePasswordVisibility() {
+    const input = document.getElementById('access_password');
+    if (!input) return;
+    input.type = input.type === 'password' ? 'text' : 'password';
+}
+</script>
 
 </body>
 </html>
