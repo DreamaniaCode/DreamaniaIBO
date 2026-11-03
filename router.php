@@ -23,6 +23,7 @@ $apiRoutes = [
     '/player_api.php',
     '/download',
     '/app.apk',
+    '/DreamaniaPlayer.apk',
     '/DreamaniaIBOPro.apk',
     '/api.php'
 ];

@@ -1,54 +1,61 @@
-# 🌟 Dreamania IBO Pro - Management Panel & API Server
+# 🌟 Dreamania Player - Management Panel & API Server
 
-A modern, high-performance IPTV Web Management Panel and API Server designed for **Dreamania IBO Pro** (compatible with SanSat Ultra V10 and IBO Player Pro apps).
+A modern, high-performance IPTV Web Management Panel and API Server designed for **Dreamania Player** (powered by DreamaniaCode).
 
-Built with clean PHP 8.2+ and SQLite3 (WAL mode) for seamless, zero-configuration deployment on **Coolify**, Docker, or any standard web server.
+Built with clean PHP 8.2+, supporting both **PostgreSQL** (via `DATABASE_URL`) and **SQLite3** (WAL mode) for seamless zero-configuration production deployment with Docker or standard web servers.
 
 ---
 
 ## ✨ Features
 
-- **⚡ Add IBO Users (Xtream Codes)**:
-  - Add users linked to pre-configured DNS servers.
+- **⚡ Xtream Codes API & Direct M3U Support**:
+  - Direct integration with Xtream Codes `player_api.php` protocol for instant category and stream loading.
+  - Full support for standard M3U / M3U8 playlists with custom naming.
   - Automatic MAC address formatting and normalization.
-  - Generates standard Xtream M3U streams with credentials.
-- **📄 Add M3U Users**:
-  - Add direct M3U playlist URLs for any MAC address.
-  - Custom display naming.
-- **📋 Playlists & Devices Management**:
-  - View all registered devices and playlists.
-  - Display MAC addresses and 6-digit Device Keys.
-  - Delete or inspect playlists.
-- **🌐 DNS Servers Manager**:
-  - Add, update, and remove Xtream Codes DNS portals.
+- **💎 Device & Subscription Management**:
+  - One-click **7-Day Trial** activation.
+  - One-click **1-Year Subscription** activation.
+  - One-click **Lifetime Subscription** activation.
+  - Instant Block / Unblock access control.
+- **👥 Reseller Management Portal**:
+  - Dedicated reseller roles with secure credentials.
+  - Credit tracking and automated deduction per subscription activation.
+  - Resellers only see and manage their assigned customer devices.
+- **📊 Active Lines & Stream Tracking**:
+  - Real-time logging of active streams, client IP addresses, user agents, and playback timestamps.
+- **🌐 DNS Portals Manager**:
+  - Add, update, and manage multiple Xtream Codes DNS server endpoints.
 - **⚙️ Panel & Application Settings**:
-  - Customizable admin password (default: `200600`).
+  - Customizable admin master password.
   - In-app notification title & message (displayed directly on TV screens).
-  - Default account expiry and trial days.
-  - APK update download link configuration.
-- **🔒 Reverse Engineered API Compatibility**:
-  - Fully compatible with `SanSatUltraV10.apk` / `com.shadeed.SanSatUp`.
-  - Implements the exact obfuscation/deobfuscation algorithm (`CryptoHelper`) matching Dalvik class `t2.g`.
-  - Supports `/authenticate`, `/playlists`, `/playlists/delete`, `/parent-control/update`, and `player_api.php`.
+  - Configurable trial days and default subscription duration.
+  - Direct APK download endpoint at `https://dmibo.myskillscloud.com/download`.
+- **🔒 API Protocol & App Security**:
+  - Secure reverse-compatible payload obfuscation (`CryptoHelper`).
+  - Supports `/authenticate`, `/playlists`, `/delete`, `/parent-control/update`, and `player_api.php`.
 
 ---
 
-## 🚀 Deployment on Coolify
+## 🚀 Production Deployment (Docker)
 
-### Option A: Using Dockerfile (Recommended)
-1. In your **Coolify** dashboard, click **+ New Resource** -> **Public/Private Repository**.
-2. Set the repository URL:
-   ```
-   https://github.com/DreamaniaCode/DreamaniaIBO.git
-   ```
-3. Set the build pack to **Dockerfile**.
-4. Set the internal port to **80**.
-5. Add a persistent volume for database storage:
+### Using Dockerfile
+1. Deploy from repository:
+   - Build pack: **Dockerfile**
+   - Port: **80**
+2. Environment Variables:
+   - Set `DATABASE_URL` to your PostgreSQL connection string:
+     ```
+     DATABASE_URL=postgres://user:password@host:5432/dbname?sslmode=require
+     ```
+   *(If `DATABASE_URL` is omitted, the application automatically uses high-performance SQLite3 in `/var/www/html/data`)*.
+3. Persistent Storage (optional for SQLite & uploaded APK storage):
    - Mount path: `/var/www/html/data`
-6. Click **Deploy**!
 
-### Option B: Using Docker Compose
-Coolify automatically detects `docker-compose.yml` if you choose Docker Compose deployment.
+### Using Docker Compose
+Run with `docker compose up -d`:
+```bash
+docker compose up -d --build
+```
 
 ---
 
@@ -60,7 +67,7 @@ php -S 0.0.0.0:80 router.php
 ```
 Open [http://localhost/](http://localhost/) in your browser.
 
-- **Default Access Password**: `200600`
+- **Default Master Admin Password**: `200600`
 
 ---
 
@@ -69,19 +76,20 @@ Open [http://localhost/](http://localhost/) in your browser.
 ```
 ├── .htaccess            # Apache URL rewrite rules for clean API paths
 ├── .gitignore           # Git ignore rules
-├── Dockerfile           # Optimized PHP 8.2 Apache production image
-├── docker-compose.yml   # Docker Compose definition with data volume
-├── api.php              # API router (/authenticate, /delete, /parent-control)
-├── crypto.php           # Payload obfuscator & deobfuscator matching app
-├── db.php               # SQLite database layer with auto-migration
-├── index.php            # Modern dark-themed administration panel
-├── qr.php               # QR code generator endpoint
-├── router.php           # Built-in PHP CLI development server router
-└── data/                # Database directory (database.sqlite)
+├── Dockerfile           # Production PHP 8.2 Apache image (PostgreSQL + SQLite)
+├── docker-compose.yml   # Docker Compose definition with environment & volume
+├── api.php              # API router (/authenticate, /delete, /parent-control, /download)
+├── crypto.php           # High-speed payload obfuscator & deobfuscator
+├── db.php               # Multi-engine database layer (PostgreSQL + SQLite) with auto-migration
+├── index.php            # Modern dark-themed administration & reseller portal
+├── qr.php               # Dynamic QR code generator
+├── router.php           # Development server router
+└── data/                # Data directory (database.sqlite, app.apk)
 ```
 
 ---
 
-## 🔐 Default Credentials
-- **Admin Password**: `200600` (can be changed in the Settings tab).
-
+## 🔐 Credentials & Attribution
+- **Default Master Password**: `200600` (can be updated in the Settings tab).
+- **Official Download URL**: `https://dmibo.myskillscloud.com/download`
+- **Powered by**: [DreamaniaCode](https://www.facebook.com/dreamaniacode)

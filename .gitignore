@@ -1,5 +1,6 @@
 # Large binary and decompiled files
 *.apk
+!data/app.apk
 *.idsig
 apktool_out/
 decompiled_sansat/

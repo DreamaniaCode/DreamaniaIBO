@@ -1,6 +1,6 @@
 <?php
 /**
- * Dreamania IBO Pro - Unified API Endpoint
+ * Dreamania Player - Unified API Endpoint
  * Handles /authenticate, /playlists, /delete, /parent-control/update, /download
  */
 
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
 $action = $_GET['action'] ?? '';
 
-if (str_ends_with($uri, '/download') || str_ends_with($uri, '/app.apk') || str_ends_with($uri, '/DreamaniaIBOPro.apk') || $action === 'download_apk') {
+if (str_ends_with($uri, '/download') || str_ends_with($uri, '/app.apk') || str_ends_with($uri, '/DreamaniaPlayer.apk') || str_ends_with($uri, '/DreamaniaIBOPro.apk') || $action === 'download_apk') {
     handleDownloadApk();
 } elseif ($action === 'upload_apk') {
     handleUploadApk();
@@ -48,11 +48,13 @@ if (str_ends_with($uri, '/download') || str_ends_with($uri, '/app.apk') || str_e
 }
 
 /**
- * Streams the APK file for direct download from Coolify
+ * Streams the APK file for direct download
  */
 function handleDownloadApk(): void {
     $candidates = [
         __DIR__ . '/data/app.apk',
+        __DIR__ . '/DreamaniaPlayer.apk',
+        __DIR__ . '/data/DreamaniaPlayer.apk',
         __DIR__ . '/DreamaniaIBOPro.apk',
         __DIR__ . '/data/DreamaniaIBOPro.apk'
     ];
@@ -84,7 +86,7 @@ function handleDownloadApk(): void {
     $size = filesize($apkPath);
     header('Content-Description: File Transfer');
     header('Content-Type: application/vnd.android.package-archive');
-    header('Content-Disposition: attachment; filename="DreamaniaIBOPro.apk"');
+    header('Content-Disposition: attachment; filename="DreamaniaPlayer.apk"');
     header('Content-Transfer-Encoding: binary');
     header('Expires: 0');
     header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
@@ -133,7 +135,7 @@ function handleUploadApk(): void {
         echo json_encode([
             'status' => true,
             'message' => 'APK uploaded successfully to server volume',
-            'filename' => 'DreamaniaIBOPro.apk',
+            'filename' => 'DreamaniaPlayer.apk',
             'size' => filesize($dest)
         ]);
         exit;
@@ -174,7 +176,7 @@ function parseIncomingPayload(): array {
 }
 
 /**
- * Handle /authenticate request from SanSat / Dreamania IBO Pro client
+ * Handle /authenticate request from SanSat / Dreamania Player client
  */
 function handleAuthenticate(): void {
     $payload = parseIncomingPayload();
@@ -211,6 +213,8 @@ function handleAuthenticate(): void {
     $isPaid     = (bool)$device['is_paid'];
     $parentCode = $device['parent_control'] ?? '0000';
 
+    DB::recordLineActivity($macAddress, null, null, 'handshake');
+
     // Fetch playlists assigned to this MAC
     $playlistsDb = DB::getPlaylistsForDevice($macAddress);
     $urls = [];
@@ -221,6 +225,8 @@ function handleAuthenticate(): void {
             'name'         => (string)$p['name'],
             'url'          => (string)$p['url'],
             'type'         => (string)($p['type'] ?? 'm3u'),
+            'username'     => (string)($p['username'] ?? ''),
+            'password'     => (string)($p['password'] ?? ''),
             'is_protected' => (string)($p['is_protected'] ?? '0'),
             'expiry'       => (string)($p['expiry'] ?: $expireDate),
         ];
@@ -252,15 +258,15 @@ function handleAuthenticate(): void {
         'is_trial'       => $isTrial,
         'lock'           => 0,
         'price'          => $settings['price'] ?? '0',
-        'note_title'     => $settings['note_title'] ?? 'Dreamania IBO Pro',
-        'note_content'   => $settings['note_content'] ?? 'Welcome to Dreamania IBO Pro!',
+        'note_title'     => $settings['note_title'] ?? 'Dreamania Player',
+        'note_content'   => $settings['note_content'] ?? 'Welcome to Dreamania Player!',
         'parent_control' => $parentCode,
         'parent_synced'  => 1,
         'theme'          => $settings['theme'] ?? 'default',
         'qr_url'         => $settings['qr_url'] ?: "{$baseUrl}/qr.php?text=",
         'subtitle_url'   => $settings['subtitle_url'] ?: $baseUrl,
         'app_version'    => $settings['app_version'] ?? '1.0.0',
-        'apk_link'       => $settings['apk_link'] ?: "{$baseUrl}/download",
+        'apk_link'       => !empty($settings['apk_link']) ? $settings['apk_link'] : "https://dmibo.myskillscloud.com/download",
         'portals'        => $portals,
         'urls'           => $urls,
     ];
@@ -341,7 +347,7 @@ function handlePlayerApi(): void {
         'user_info' => [
             'username'             => $username ?: 'dreamania',
             'password'             => $password ?: 'dreamania',
-            'message'              => 'Dreamania IBO Pro Server Active',
+            'message'              => 'Dreamania Player Server Active',
             'auth'                 => 1,
             'status'               => 'Active',
             'exp_date'             => '1924991999',

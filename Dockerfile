@@ -1,10 +1,11 @@
 FROM php:8.2-apache
 
-# Install SQLite3 & PDO SQLite extension
+# Install SQLite3 & PostgreSQL PDO extensions
 RUN apt-get update && apt-get install -y \
     libsqlite3-dev \
     sqlite3 \
-    && docker-php-ext-install pdo pdo_sqlite \
+    libpq-dev \
+    && docker-php-ext-install pdo pdo_sqlite pdo_pgsql \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
