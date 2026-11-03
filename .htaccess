@@ -1,0 +1,19 @@
+RewriteEngine On
+RewriteBase /
+
+# Stop processing for real files and directories
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# API routes
+RewriteRule ^authenticate/?$ api.php?action=authenticate [QSA,L]
+RewriteRule ^playlists/?$ api.php?action=playlists [QSA,L]
+RewriteRule ^playlists/delete/?$ api.php?action=delete [QSA,L]
+RewriteRule ^delete/?$ api.php?action=delete [QSA,L]
+RewriteRule ^parent-control/update/?$ api.php?action=parent_control [QSA,L]
+RewriteRule ^player_api\.php$ api.php [QSA,L]
+
+# Main portal
+RewriteRule ^ index.php [QSA,L]
+

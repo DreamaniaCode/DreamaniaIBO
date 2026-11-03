@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  dreamania-panel:
+    build: .
+    container_name: dreamania_ibo_panel
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - dreamania_data:/var/www/html/data
+
+volumes:
+  dreamania_data:
+    driver: local
+
