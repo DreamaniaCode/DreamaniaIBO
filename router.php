@@ -13,7 +13,7 @@ if ($uri !== '/' && file_exists(__DIR__ . $uri) && !is_dir(__DIR__ . $uri)) {
     return false;
 }
 
-// API Routes
+// API and Download Routes
 $apiRoutes = [
     '/authenticate',
     '/playlists',
@@ -21,6 +21,9 @@ $apiRoutes = [
     '/delete',
     '/parent-control/update',
     '/player_api.php',
+    '/download',
+    '/app.apk',
+    '/DreamaniaIBOPro.apk',
     '/api.php'
 ];
 
@@ -38,4 +41,3 @@ if ($uri === '/qr.php') {
 
 // Default to main panel
 require __DIR__ . '/index.php';
-

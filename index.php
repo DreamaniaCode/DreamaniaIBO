@@ -103,6 +103,20 @@ if ($isLogged && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     $msg = "DNS Server removed.";
                     $msgType = "success";
                 }
+            } elseif ($formType === 'upload_apk_file') {
+                if (isset($_FILES['apk_file']) && $_FILES['apk_file']['error'] === UPLOAD_ERR_OK) {
+                    $dest = __DIR__ . '/data/app.apk';
+                    if (move_uploaded_file($_FILES['apk_file']['tmp_name'], $dest)) {
+                        $sizeMb = round(filesize($dest) / (1024 * 1024), 2);
+                        $msg = "APK file uploaded successfully! Total size: {$sizeMb} MB";
+                        $msgType = "success";
+                    } else {
+                        throw new Exception("Could not move uploaded APK to data/app.apk. Check directory permissions.");
+                    }
+                } else {
+                    $errCode = $_FILES['apk_file']['error'] ?? 'Unknown';
+                    throw new Exception("Upload error: code {$errCode}");
+                }
             } elseif ($formType === 'save_settings') {
                 if (!empty($_POST['admin_password'])) {
                     DB::setSetting('admin_password', trim($_POST['admin_password']));
@@ -129,6 +143,14 @@ $devices = $isLogged ? DB::getAllDevices() : [];
 $settings = $isLogged ? DB::getAllSettings() : [];
 
 $activeTab = $_GET['tab'] ?? 'add';
+
+// APK File Status
+$apkPath = __DIR__ . '/data/app.apk';
+if (!file_exists($apkPath) && file_exists(__DIR__ . '/DreamaniaIBOPro.apk')) {
+    $apkPath = __DIR__ . '/DreamaniaIBOPro.apk';
+}
+$apkFileExists = file_exists($apkPath) && filesize($apkPath) > 100000;
+$apkFileSize = $apkFileExists ? round(filesize($apkPath) / (1024 * 1024), 2) : 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -241,6 +263,13 @@ body {
     transform: none;
     box-shadow: none;
 }
+.btn-success {
+    background: #059669;
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+}
+.btn-success:hover {
+    background: #047857;
+}
 .btn-danger {
     background: #e11d48;
     box-shadow: 0 2px 8px rgba(225, 29, 72, 0.3);
@@ -345,7 +374,7 @@ label {
     font-weight: 600;
     color: var(--muted);
 }
-input[type=text], input[type=password], input[type=url], select, textarea {
+input[type=text], input[type=password], input[type=url], input[type=file], select, textarea {
     width: 100%;
     padding: 10px 14px;
     border-radius: 8px;
@@ -407,6 +436,8 @@ tr:hover td {
 }
 .badge-ibo { background: rgba(191, 30, 46, 0.2); color: #fb7185; border: 1px solid rgba(191, 30, 46, 0.4); }
 .badge-m3u { background: rgba(59, 130, 246, 0.2); color: #93c5fd; border: 1px solid rgba(59, 130, 246, 0.4); }
+.badge-active { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.4); }
+.badge-missing { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.4); }
 .mac-badge {
     font-family: monospace;
     font-size: 13px;
@@ -417,7 +448,7 @@ tr:hover td {
 }
 .login-box {
     max-width: 420px;
-    margin: 60px auto;
+    margin: 40px auto;
 }
 .footer {
     text-align: center;
@@ -442,6 +473,9 @@ tr:hover td {
         </div>
     </a>
     <div class="nav-actions">
+        <?php if ($apkFileExists): ?>
+            <a href="download" class="btn btn-secondary btn-sm" title="Download APK for TV/Mobile">📲 Download APK</a>
+        <?php endif; ?>
         <?php if ($isLogged): ?>
             <form method="post" style="display:inline;">
                 <input type="hidden" name="action" value="logout">
@@ -472,6 +506,13 @@ tr:hover td {
                 </div>
                 <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Login</button>
             </form>
+
+            <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center;">
+                <p style="font-size: 13px; color: var(--muted); margin-bottom: 12px;">Looking for the client app for TV or Android?</p>
+                <a href="download" class="btn btn-secondary" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    📲 Download Dreamania IBO Pro APK
+                </a>
+            </div>
         </div>
     <?php else: ?>
         <!-- Dashboard & Navigation -->
@@ -488,13 +529,23 @@ tr:hover td {
                 <span class="stat-label">Configured DNS Servers</span>
                 <span class="stat-value"><?= count($dnsList) ?></span>
             </div>
+            <div class="stat-card">
+                <span class="stat-label">Hosted APK Status</span>
+                <span class="stat-value" style="font-size: 18px; margin-top: 4px;">
+                    <?php if ($apkFileExists): ?>
+                        <span class="badge badge-active">Available (<?= $apkFileSize ?> MB)</span>
+                    <?php else: ?>
+                        <span class="badge badge-missing">Not Uploaded</span>
+                    <?php endif; ?>
+                </span>
+            </div>
         </div>
 
         <nav class="tabs-nav">
             <a href="?tab=add" class="tab-link <?= $activeTab === 'add' ? 'active' : '' ?>">⚡ Add Users</a>
             <a href="?tab=playlists" class="tab-link <?= $activeTab === 'playlists' ? 'active' : '' ?>">📋 Manage Playlists (<?= count($playlists) ?>)</a>
             <a href="?tab=dns" class="tab-link <?= $activeTab === 'dns' ? 'active' : '' ?>">🌐 DNS Servers (<?= count($dnsList) ?>)</a>
-            <a href="?tab=settings" class="tab-link <?= $activeTab === 'settings' ? 'active' : '' ?>">⚙️ Settings</a>
+            <a href="?tab=settings" class="tab-link <?= $activeTab === 'settings' ? 'active' : '' ?>">⚙️ Settings & APK</a>
         </nav>
 
         <?php if ($activeTab === 'add'): ?>
@@ -667,38 +718,75 @@ tr:hover td {
 
         <?php elseif ($activeTab === 'settings'): ?>
             <!-- Panel & App Settings -->
-            <div class="card" style="max-width: 650px; margin: 0 auto;">
-                <h2>⚙️ Panel & Application Settings</h2>
-                <form method="post">
-                    <input type="hidden" name="form_type" value="save_settings">
-                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
-                    
-                    <div class="form-group">
-                        <label for="admin_password">Admin Portal Password</label>
-                        <input type="password" id="admin_password" name="admin_password" value="<?= htmlspecialchars($settings['admin_password'] ?? '200600') ?>">
+            <div style="max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 24px;">
+                <!-- APK Hosting Card -->
+                <div class="card">
+                    <h2>📦 APK Hosting on Coolify</h2>
+                    <p style="font-size: 13px; color: var(--muted); margin-bottom: 16px;">
+                        Host your <code>DreamaniaIBOPro.apk</code> directly on this domain inside your Coolify persistent volume (no GitHub required).
+                    </p>
+
+                    <div style="background: #0f172a; padding: 14px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 18px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 13px; color: var(--muted);">Status:</span>
+                            <?php if ($apkFileExists): ?>
+                                <span class="badge badge-active">Available (<?= $apkFileSize ?> MB)</span>
+                            <?php else: ?>
+                                <span class="badge badge-missing">No APK Uploaded</span>
+                            <?php endif; ?>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 13px; color: var(--muted);">Direct URL:</span>
+                            <a href="download" target="_blank" style="font-family: monospace; font-size: 13px; color: #38bdf8;">/download</a>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="note_title">In-App Notification Title</label>
-                        <input type="text" id="note_title" name="note_title" value="<?= htmlspecialchars($settings['note_title'] ?? '') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="note_content">In-App Notification Message</label>
-                        <textarea id="note_content" name="note_content" rows="3"><?= htmlspecialchars($settings['note_content'] ?? '') ?></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="default_expiry">Default Account Expiry</label>
-                        <input type="text" id="default_expiry" name="default_expiry" value="<?= htmlspecialchars($settings['default_expiry'] ?? '2030-01-01') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="app_version">App Version</label>
-                        <input type="text" id="app_version" name="app_version" value="<?= htmlspecialchars($settings['app_version'] ?? '1.0.0') ?>">
-                    </div>
-                    <div class="form-group">
-                        <label for="apk_link">APK Update Download Link</label>
-                        <input type="url" id="apk_link" name="apk_link" placeholder="https://domain.com/dreamania.apk" value="<?= htmlspecialchars($settings['apk_link'] ?? '') ?>">
-                    </div>
-                    <button type="submit" class="btn" style="width: 100%;">Save Settings</button>
-                </form>
+
+                    <form method="post" enctype="multipart/form-data">
+                        <input type="hidden" name="form_type" value="upload_apk_file">
+                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                        
+                        <div class="form-group">
+                            <label for="apk_file">Upload / Replace APK File</label>
+                            <input type="file" id="apk_file" name="apk_file" accept=".apk" required>
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">Upload APK to Coolify</button>
+                    </form>
+                </div>
+
+                <!-- Settings Card -->
+                <div class="card">
+                    <h2>⚙️ Panel & Application Settings</h2>
+                    <form method="post">
+                        <input type="hidden" name="form_type" value="save_settings">
+                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                        
+                        <div class="form-group">
+                            <label for="admin_password">Admin Portal Password</label>
+                            <input type="password" id="admin_password" name="admin_password" value="<?= htmlspecialchars($settings['admin_password'] ?? '200600') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="note_title">In-App Notification Title</label>
+                            <input type="text" id="note_title" name="note_title" value="<?= htmlspecialchars($settings['note_title'] ?? '') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="note_content">In-App Notification Message</label>
+                            <textarea id="note_content" name="note_content" rows="3"><?= htmlspecialchars($settings['note_content'] ?? '') ?></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="default_expiry">Default Account Expiry</label>
+                            <input type="text" id="default_expiry" name="default_expiry" value="<?= htmlspecialchars($settings['default_expiry'] ?? '2030-01-01') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="app_version">App Version</label>
+                            <input type="text" id="app_version" name="app_version" value="<?= htmlspecialchars($settings['app_version'] ?? '1.0.0') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="apk_link">APK Download Link (auto-filled if left empty)</label>
+                            <input type="url" id="apk_link" name="apk_link" placeholder="https://dmibo.myskillscloud.com/download" value="<?= htmlspecialchars($settings['apk_link'] ?? '') ?>">
+                        </div>
+                        <button type="submit" class="btn" style="width: 100%;">Save Settings</button>
+                    </form>
+                </div>
             </div>
         <?php endif; ?>
     <?php endif; ?>
@@ -710,4 +798,3 @@ tr:hover td {
 
 </body>
 </html>
-

@@ -1,7 +1,7 @@
 <?php
 /**
  * Dreamania IBO Pro - Unified API Endpoint
- * Handles /authenticate, /playlists, /delete, /parent-control/update
+ * Handles /authenticate, /playlists, /delete, /parent-control/update, /download
  */
 
 declare(strict_types=1);
@@ -9,10 +9,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/crypto.php';
 
-header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Gc-Token, x-hash, x-hash-2, x-token, x-token-2, x-token-3');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Gc-Token, x-hash, x-hash-2, x-token, x-token-2, x-token-3, X-Admin-Password');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -23,19 +22,125 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
 $action = $_GET['action'] ?? '';
 
-if (str_ends_with($uri, '/authenticate') || $action === 'authenticate') {
+if (str_ends_with($uri, '/download') || str_ends_with($uri, '/app.apk') || str_ends_with($uri, '/DreamaniaIBOPro.apk') || $action === 'download_apk') {
+    handleDownloadApk();
+} elseif ($action === 'upload_apk') {
+    handleUploadApk();
+} elseif (str_ends_with($uri, '/authenticate') || $action === 'authenticate') {
+    header('Content-Type: application/json; charset=utf-8');
     handleAuthenticate();
 } elseif (str_ends_with($uri, '/delete') || str_ends_with($uri, '/playlists/delete') || $action === 'delete') {
+    header('Content-Type: application/json; charset=utf-8');
     handleDeletePlaylist();
 } elseif (str_ends_with($uri, '/parent-control/update') || $action === 'parent_control') {
+    header('Content-Type: application/json; charset=utf-8');
     handleParentControl();
 } elseif (str_ends_with($uri, '/playlists') || $action === 'playlists') {
+    header('Content-Type: application/json; charset=utf-8');
     handleGetPlaylists();
 } elseif (str_ends_with($uri, '/player_api.php')) {
+    header('Content-Type: application/json; charset=utf-8');
     handlePlayerApi();
 } else {
     // Default fallback: if POST data is present, treat as authenticate
+    header('Content-Type: application/json; charset=utf-8');
     handleAuthenticate();
+}
+
+/**
+ * Streams the APK file for direct download from Coolify
+ */
+function handleDownloadApk(): void {
+    $candidates = [
+        __DIR__ . '/data/app.apk',
+        __DIR__ . '/DreamaniaIBOPro.apk',
+        __DIR__ . '/data/DreamaniaIBOPro.apk'
+    ];
+
+    $apkPath = null;
+    foreach ($candidates as $c) {
+        if (file_exists($c) && filesize($c) > 100000) {
+            $apkPath = $c;
+            break;
+        }
+    }
+
+    if ($apkPath === null) {
+        http_response_code(404);
+        header('Content-Type: text/html; charset=utf-8');
+        echo "<!DOCTYPE html><html><body style='background:#0f172a;color:#fff;font-family:sans-serif;padding:40px;text-align:center;'>";
+        echo "<h2>APK File Not Found On Server</h2>";
+        echo "<p style='color:#94a3b8;'>Please upload the APK file via the Admin Panel Settings.</p>";
+        echo "<a href='index.php' style='color:#38bdf8;'>Back to Admin Portal</a>";
+        echo "</body></html>";
+        exit;
+    }
+
+    // Clear output buffers
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
+
+    $size = filesize($apkPath);
+    header('Content-Description: File Transfer');
+    header('Content-Type: application/vnd.android.package-archive');
+    header('Content-Disposition: attachment; filename="DreamaniaIBOPro.apk"');
+    header('Content-Transfer-Encoding: binary');
+    header('Expires: 0');
+    header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
+    header('Pragma: public');
+    header('Content-Length: ' . $size);
+
+    $fp = fopen($apkPath, 'rb');
+    if ($fp) {
+        while (!feof($fp)) {
+            echo fread($fp, 1024 * 64);
+            flush();
+        }
+        fclose($fp);
+    }
+    exit;
+}
+
+/**
+ * Direct API upload handler for APK
+ */
+function handleUploadApk(): void {
+    header('Content-Type: application/json; charset=utf-8');
+
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    $pass = $_POST['access_password'] ?? ($_SERVER['HTTP_X_ADMIN_PASSWORD'] ?? '');
+    $savedPass = DB::getSetting('admin_password', '200600');
+    $isLogged = !empty($_SESSION['admin_logged']) || ($pass === $savedPass);
+
+    if (!$isLogged) {
+        http_response_code(401);
+        echo json_encode(['status' => false, 'message' => 'Unauthorized password']);
+        exit;
+    }
+
+    if (empty($_FILES['apk_file']) || $_FILES['apk_file']['error'] !== UPLOAD_ERR_OK) {
+        $err = $_FILES['apk_file']['error'] ?? 'No file provided';
+        echo json_encode(['status' => false, 'message' => "Upload error: {$err}"]);
+        exit;
+    }
+
+    $dest = __DIR__ . '/data/app.apk';
+    if (move_uploaded_file($_FILES['apk_file']['tmp_name'], $dest)) {
+        echo json_encode([
+            'status' => true,
+            'message' => 'APK uploaded successfully to server volume',
+            'filename' => 'DreamaniaIBOPro.apk',
+            'size' => filesize($dest)
+        ]);
+        exit;
+    }
+
+    echo json_encode(['status' => false, 'message' => 'Failed to save APK file to disk']);
+    exit;
 }
 
 /**
@@ -155,7 +260,7 @@ function handleAuthenticate(): void {
         'qr_url'         => $settings['qr_url'] ?: "{$baseUrl}/qr.php?text=",
         'subtitle_url'   => $settings['subtitle_url'] ?: $baseUrl,
         'app_version'    => $settings['app_version'] ?? '1.0.0',
-        'apk_link'       => $settings['apk_link'] ?? '',
+        'apk_link'       => $settings['apk_link'] ?: "{$baseUrl}/download",
         'portals'        => $portals,
         'urls'           => $urls,
     ];
@@ -259,4 +364,3 @@ function handlePlayerApi(): void {
     ]);
     exit;
 }
-

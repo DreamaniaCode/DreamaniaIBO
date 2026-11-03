@@ -6,6 +6,9 @@ RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
+# Download route
+RewriteRule ^(download|app\.apk|DreamaniaIBOPro\.apk)/?$ api.php?action=download_apk [QSA,L]
+
 # API routes
 RewriteRule ^authenticate/?$ api.php?action=authenticate [QSA,L]
 RewriteRule ^playlists/?$ api.php?action=playlists [QSA,L]
@@ -16,4 +19,3 @@ RewriteRule ^player_api\.php$ api.php [QSA,L]
 
 # Main portal
 RewriteRule ^ index.php [QSA,L]
-
