@@ -84,3 +84,4 @@ Open [http://localhost/](http://localhost/) in your browser.
 
 ## 🔐 Default Credentials
 - **Admin Password**: `200600` (can be changed in the Settings tab).
+
