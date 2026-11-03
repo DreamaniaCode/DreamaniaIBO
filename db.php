@@ -240,6 +240,12 @@ class DB {
     }
 
     public static function getSetting(string $key, string $default = ''): string {
+        if ($key === 'admin_password') {
+            $envPass = getenv('ADMIN_PASSWORD') ?: ($_ENV['ADMIN_PASSWORD'] ?? ($_SERVER['ADMIN_PASSWORD'] ?? ''));
+            if (!empty($envPass)) {
+                return (string)$envPass;
+            }
+        }
         $pdo = self::getConnection();
         $stmt = $pdo->prepare("SELECT value FROM settings WHERE key = ?");
         $stmt->execute([$key]);
