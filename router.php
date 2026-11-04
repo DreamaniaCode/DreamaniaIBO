@@ -40,5 +40,16 @@ if ($uri === '/qr.php') {
     exit;
 }
 
-// Default to main panel
+if ($uri === '/admin' || $uri === '/portal' || $uri === '/panel') {
+    $_GET['panel'] = '1';
+    require __DIR__ . '/index.php';
+    exit;
+}
+
+if ($uri === '/landing') {
+    require __DIR__ . '/landing.php';
+    exit;
+}
+
+// Default to main panel / landing
 require __DIR__ . '/index.php';

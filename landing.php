@@ -1,0 +1,1419 @@
+<?php
+/**
+ * Dreamania Player - Official English Landing Page
+ * Next-Generation IPTV Player for Android TV, Fire TV, and Mobile
+ */
+
+declare(strict_types=1);
+
+$downloadUrl = "download";
+$portalUrl = "index.php?panel=1";
+$appVersion = "1.0.0";
+$appSize = "14.5 MB";
+$minAndroid = "5.0 (Lollipop) to Android 14+";
+$qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dmibo.myskillscloud.com') . "/download");
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dreamania Player — The Ultimate Next-Gen IPTV Experience for Android & Fire TV</title>
+    <meta name="description" content="Dreamania Player is a high-performance IPTV player for Android TV, Fire TV Stick, and smartphones. Enjoy 4K HDR playback, live EPG, heart favorites, custom channel reordering, multi-audio, and cinema VOD.">
+    <meta name="keywords" content="IPTV player, Android TV, Fire Stick, Dreamania Player, Xtream Codes, M3U, 4K streaming, EPG, Favorites, VOD player">
+    <link rel="icon" type="image/png" href="assets/img/icon.png">
+
+    <!-- Fonts: Inter / System Font Stack -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-body: #07060e;
+            --bg-card: rgba(18, 14, 30, 0.72);
+            --bg-card-hover: rgba(28, 22, 48, 0.9);
+            --bg-input: #120e22;
+            --border: rgba(139, 92, 246, 0.22);
+            --border-hover: rgba(139, 92, 246, 0.55);
+            --primary: #8b5cf6;
+            --primary-glow: rgba(139, 92, 246, 0.45);
+            --secondary: #06b6d4;
+            --secondary-glow: rgba(6, 182, 212, 0.4);
+            --accent-gold: #f59e0b;
+            --accent-gold-glow: rgba(245, 158, 11, 0.35);
+            --accent-red: #ef4444;
+            --text-main: #f8fafc;
+            --text-sub: #94a3b8;
+            --text-muted: #64748b;
+            --radius-lg: 20px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+            --transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Ambient Background Glowing Orbs */
+        .ambient-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(140px);
+            opacity: 0.28;
+            animation: orbFloat 18s ease-in-out infinite alternate;
+        }
+        .orb-1 {
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, #8b5cf6 0%, #4c1d95 70%);
+            top: -150px;
+            left: -100px;
+        }
+        .orb-2 {
+            width: 550px;
+            height: 550px;
+            background: radial-gradient(circle, #06b6d4 0%, #0e7490 70%);
+            top: 40%;
+            right: -120px;
+            animation-duration: 22s;
+        }
+        .orb-3 {
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, #d946ef 0%, #831843 70%);
+            bottom: -150px;
+            left: 30%;
+            animation-duration: 25s;
+        }
+        @keyframes orbFloat {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(40px, 60px) scale(1.08); }
+            100% { transform: translate(-30px, 30px) scale(0.96); }
+        }
+
+        /* Grid Pattern */
+        .grid-pattern {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(139, 92, 246, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(139, 92, 246, 0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Layout Container */
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Navbar */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(7, 6, 14, 0.85);
+            backdrop-filter: blur(18px);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 0;
+        }
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            text-decoration: none;
+            color: #fff;
+        }
+        .brand-logo {
+            width: 44px;
+            height: 44px;
+            filter: drop-shadow(0 4px 12px var(--primary-glow));
+            border-radius: 12px;
+        }
+        .brand-text {
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .brand-text span {
+            color: var(--secondary);
+        }
+        .brand-badge {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.2));
+            color: #c4b5fd;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-sub);
+            font-weight: 600;
+            font-size: 14px;
+            transition: var(--transition);
+        }
+        .nav-link:hover {
+            color: #fff;
+        }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 11px 22px;
+            font-size: 14px;
+            font-weight: 700;
+            border-radius: var(--radius-sm);
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 20px var(--primary-glow);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--primary-glow);
+            filter: brightness(1.1);
+        }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: #fff;
+            border: 1px solid var(--border);
+            backdrop-filter: blur(10px);
+        }
+        .btn-secondary:hover {
+            background: rgba(139, 92, 246, 0.15);
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        .btn-gold {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: #000;
+            box-shadow: 0 4px 20px var(--accent-gold-glow);
+        }
+        .btn-gold:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px var(--accent-gold-glow);
+            filter: brightness(1.08);
+        }
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+        .btn-lg {
+            padding: 16px 32px;
+            font-size: 16px;
+            border-radius: var(--radius-md);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 90px 0 60px;
+            text-align: center;
+            position: relative;
+        }
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 16px;
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid rgba(139, 92, 246, 0.35);
+            border-radius: 50px;
+            color: #c4b5fd;
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+        .hero-badge-dot {
+            width: 8px;
+            height: 8px;
+            background-color: #10b981;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #10b981;
+        }
+        .hero-title {
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1.15;
+            letter-spacing: -1.5px;
+            max-width: 950px;
+            margin: 0 auto 24px;
+        }
+        .hero-title .gradient-text {
+            background: linear-gradient(135deg, #ffffff 30%, #c4b5fd 70%, #06b6d4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .hero-subtitle {
+            font-size: 19px;
+            color: var(--text-sub);
+            max-width: 720px;
+            margin: 0 auto 36px;
+            font-weight: 400;
+        }
+        .hero-cta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 32px;
+            flex-wrap: wrap;
+        }
+        .hero-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 60px;
+            flex-wrap: wrap;
+        }
+        .hero-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .hero-meta-item strong {
+            color: var(--text-sub);
+        }
+
+        /* TV Mockup Container */
+        .tv-mockup-wrapper {
+            position: relative;
+            max-width: 1080px;
+            margin: 0 auto;
+        }
+        .tv-frame {
+            position: relative;
+            background: #110e1e;
+            border: 12px solid #1a162b;
+            border-radius: 28px;
+            box-shadow: 
+                0 0 0 1px rgba(139, 92, 246, 0.4),
+                0 30px 80px -20px rgba(0, 0, 0, 0.8),
+                0 0 90px rgba(139, 92, 246, 0.25);
+            overflow: hidden;
+            aspect-ratio: 16 / 9;
+        }
+        .tv-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .tv-stand {
+            width: 240px;
+            height: 16px;
+            background: linear-gradient(180deg, #2a2344, #120e22);
+            border-radius: 0 0 12px 12px;
+            margin: 0 auto;
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-top: none;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+        }
+        .floating-pill {
+            position: absolute;
+            background: rgba(18, 14, 30, 0.9);
+            border: 1px solid var(--border);
+            padding: 10px 18px;
+            border-radius: 50px;
+            backdrop-filter: blur(16px);
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            animation: floatPill 6s ease-in-out infinite alternate;
+        }
+        .pill-1 {
+            top: 15%;
+            left: -40px;
+            color: #f59e0b;
+            border-color: rgba(245, 158, 11, 0.4);
+        }
+        .pill-2 {
+            bottom: 22%;
+            right: -40px;
+            color: #06b6d4;
+            border-color: rgba(6, 182, 212, 0.4);
+            animation-delay: -3s;
+        }
+        @keyframes floatPill {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-14px); }
+        }
+
+        /* Features Section */
+        .section {
+            padding: 100px 0;
+            position: relative;
+        }
+        .section-header {
+            text-align: center;
+            max-width: 720px;
+            margin: 0 auto 60px;
+        }
+        .section-tag {
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--secondary);
+            margin-bottom: 12px;
+            display: inline-block;
+        }
+        .section-title {
+            font-size: 38px;
+            font-weight: 800;
+            letter-spacing: -1px;
+            margin-bottom: 16px;
+        }
+        .section-desc {
+            font-size: 17px;
+            color: var(--text-sub);
+        }
+
+        /* Features Grid */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 28px;
+        }
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 36px 30px;
+            backdrop-filter: blur(16px);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+        .feature-card:hover {
+            transform: translateY(-6px);
+            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            box-shadow: 0 20px 40px -15px var(--primary-glow);
+        }
+        .feature-icon-wrapper {
+            width: 58px;
+            height: 58px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(6, 182, 212, 0.15));
+            border: 1px solid rgba(139, 92, 246, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            color: #fff;
+            margin-bottom: 8px;
+        }
+        .feature-card h3 {
+            font-size: 21px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.3px;
+        }
+        .feature-card p {
+            font-size: 15px;
+            color: var(--text-sub);
+            line-height: 1.6;
+        }
+        .feature-badge {
+            align-self: flex-start;
+            font-size: 11px;
+            font-weight: 800;
+            padding: 3px 10px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .badge-purple { background: rgba(139, 92, 246, 0.18); color: #c4b5fd; border: 1px solid rgba(139, 92, 246, 0.4); }
+        .badge-gold { background: rgba(245, 158, 11, 0.18); color: #fde68a; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .badge-cyan { background: rgba(6, 182, 212, 0.18); color: #a5f3fc; border: 1px solid rgba(6, 182, 212, 0.4); }
+
+        /* Interactive Screenshots Showcase */
+        .showcase-section {
+            background: linear-gradient(180deg, transparent 0%, rgba(18, 14, 30, 0.6) 50%, transparent 100%);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            padding: 100px 0;
+        }
+        .tabs-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 45px;
+        }
+        .tab-btn {
+            background: rgba(25, 20, 42, 0.8);
+            border: 1px solid var(--border);
+            color: var(--text-sub);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .tab-btn:hover {
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+            color: #fff;
+            border-color: #8b5cf6;
+            box-shadow: 0 4px 20px var(--primary-glow);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .screen-preview-card {
+            background: #110e1e;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8);
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+        }
+        .screen-preview-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 30px 80px -15px var(--primary-glow);
+        }
+        .screen-preview-card img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+        .screen-preview-card:hover img {
+            transform: scale(1.015);
+        }
+        .screen-caption {
+            padding: 24px 30px;
+            background: rgba(14, 11, 24, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+        .screen-caption-info h4 {
+            font-size: 19px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .screen-caption-info p {
+            font-size: 14px;
+            color: var(--text-sub);
+        }
+
+        /* 3 Steps Setup */
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+            position: relative;
+        }
+        .step-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 36px 30px;
+            position: relative;
+            backdrop-filter: blur(16px);
+        }
+        .step-number {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 44px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 12px;
+        }
+        .step-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+        .step-card p {
+            font-size: 14px;
+            color: var(--text-sub);
+            line-height: 1.6;
+        }
+
+        /* Devices Compatibility */
+        .devices-banner {
+            background: linear-gradient(135deg, rgba(20, 16, 36, 0.8), rgba(12, 10, 22, 0.95));
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 45px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+        .devices-list {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            flex-wrap: wrap;
+        }
+        .device-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-sub);
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .device-item span.icon {
+            font-size: 32px;
+        }
+
+        /* Download CTA Banner */
+        .download-box {
+            background: radial-gradient(circle at 50% 0%, rgba(139, 92, 246, 0.25) 0%, rgba(18, 14, 30, 0.9) 70%);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-radius: 28px;
+            padding: 70px 48px;
+            text-align: center;
+            box-shadow: 0 25px 80px -20px var(--primary-glow);
+            position: relative;
+            overflow: hidden;
+        }
+        .download-box h2 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 18px;
+            letter-spacing: -1px;
+        }
+        .download-box p {
+            font-size: 18px;
+            color: var(--text-sub);
+            max-width: 650px;
+            margin: 0 auto 36px;
+        }
+        .download-qr-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 28px;
+            background: rgba(10, 8, 18, 0.7);
+            border: 1px solid var(--border);
+            padding: 20px 28px;
+            border-radius: var(--radius-md);
+            margin-top: 36px;
+            text-align: left;
+        }
+        .download-qr-img {
+            width: 90px;
+            height: 90px;
+            background: #fff;
+            padding: 6px;
+            border-radius: 8px;
+        }
+        .download-qr-text h5 {
+            font-size: 15px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .download-qr-text p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin: 0;
+        }
+
+        /* FAQ Section */
+        .faq-accordion {
+            max-width: 860px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .faq-item:hover {
+            border-color: var(--border-hover);
+        }
+        .faq-question {
+            padding: 20px 26px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            user-select: none;
+            color: #fff;
+        }
+        .faq-icon {
+            font-size: 18px;
+            color: var(--primary);
+            transition: transform 0.25s ease;
+        }
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0 26px;
+            font-size: 15px;
+            color: var(--text-sub);
+            line-height: 1.6;
+        }
+        .faq-item.open .faq-answer {
+            max-height: 300px;
+            padding-bottom: 22px;
+        }
+        .faq-item.open .faq-icon {
+            transform: rotate(45deg);
+        }
+
+        /* Lightbox Modal */
+        .lightbox-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(12px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+        }
+        .lightbox-modal.active {
+            display: flex;
+        }
+        .lightbox-img {
+            max-width: 92vw;
+            max-height: 90vh;
+            border-radius: 14px;
+            box-shadow: 0 0 60px rgba(139, 92, 246, 0.4);
+            border: 1px solid var(--border);
+        }
+        .lightbox-close {
+            position: absolute;
+            top: 24px;
+            right: 32px;
+            font-size: 32px;
+            color: #fff;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.1);
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+        .lightbox-close:hover {
+            background: var(--primary);
+        }
+
+        /* Footer */
+        .footer {
+            border-top: 1px solid var(--border);
+            padding: 50px 0 35px;
+            background: #05040a;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+        .footer-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .footer-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+        .footer-links a {
+            color: var(--text-sub);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+        .footer-links a:hover {
+            color: #fff;
+        }
+        .footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            padding-top: 25px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 992px) {
+            .hero-title { font-size: 42px; }
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .steps-grid { grid-template-columns: 1fr; }
+            .nav-links { display: none; }
+            .floating-pill { display: none; }
+        }
+        @media (max-width: 640px) {
+            .hero-title { font-size: 32px; }
+            .hero-subtitle { font-size: 16px; }
+            .features-grid { grid-template-columns: 1fr; }
+            .download-box { padding: 45px 24px; }
+            .download-box h2 { font-size: 30px; }
+            .download-qr-box { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Glowing Orbs -->
+    <div class="ambient-bg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+        <div class="grid-pattern"></div>
+    </div>
+
+    <!-- Navigation Header -->
+    <header class="header">
+        <div class="container navbar">
+            <a href="#" class="brand">
+                <img src="assets/img/icon.png" alt="Dreamania Player" class="brand-logo">
+                <div class="brand-text">
+                    DREAMANIA <span>PLAYER</span>
+                    <span class="brand-badge">PRO v<?= htmlspecialchars($appVersion) ?></span>
+                </div>
+            </a>
+
+            <ul class="nav-links">
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#screenshots" class="nav-link">Screenshots</a></li>
+                <li><a href="#setup" class="nav-link">How It Works</a></li>
+                <li><a href="#faq" class="nav-link">FAQ</a></li>
+            </ul>
+
+            <div class="nav-actions">
+                <a href="<?= htmlspecialchars($portalUrl) ?>" class="btn btn-secondary btn-sm" title="Admin & Reseller Login">
+                    🔐 Portal Sign In
+                </a>
+                <a href="<?= htmlspecialchars($downloadUrl) ?>" class="btn btn-primary btn-sm">
+                    ⬇️ Download APK
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">
+                <span class="hero-badge-dot"></span>
+                OFFICIAL RELEASE • ANDROID 5.0 TO 14+ SUPPORTED
+            </div>
+
+            <h1 class="hero-title">
+                The Next-Generation <span class="gradient-text">IPTV Cinema Experience</span> Built for Your Smart TV
+            </h1>
+
+            <p class="hero-subtitle">
+                Engineered for speed, stability, and stunning picture quality. Stream 4K live sports, 
+                cinema VOD, and multi-season series with instant zapping, one-touch favorites, and full remote control optimization.
+            </p>
+
+            <div class="hero-cta">
+                <a href="<?= htmlspecialchars($downloadUrl) ?>" class="btn btn-primary btn-lg">
+                    ⬇️ Download Dreamania Player APK
+                </a>
+                <a href="#screenshots" class="btn btn-secondary btn-lg">
+                    📺 View Real App Screenshots
+                </a>
+            </div>
+
+            <div class="hero-meta">
+                <div class="hero-meta-item">
+                    <span>⚡ Version:</span> <strong>v<?= htmlspecialchars($appVersion) ?></strong>
+                </div>
+                <div class="hero-meta-item">
+                    <span>📦 Size:</span> <strong><?= htmlspecialchars($appSize) ?></strong>
+                </div>
+                <div class="hero-meta-item">
+                    <span>📺 Optimized for:</span> <strong>Fire TV, Google TV, Android TV</strong>
+                </div>
+                <div class="hero-meta-item">
+                    <span>🛡️ Security:</span> <strong>Zero Bloatware • 100% Ad-Free</strong>
+                </div>
+            </div>
+
+            <!-- TV Mockup with Real Screenshot -->
+            <div class="tv-mockup-wrapper">
+                <div class="floating-pill pill-1">
+                    <span>❤️</span> One-Touch Channel Favorites
+                </div>
+                <div class="floating-pill pill-2">
+                    <span>⚡</span> 4K 60FPS Hardware Acceleration
+                </div>
+
+                <div class="tv-frame" onclick="openLightbox('assets/img/screenshots/screen_hero_dashboard.png')">
+                    <img src="assets/img/screenshots/screen_hero_dashboard.png" alt="Dreamania Player Main Dashboard">
+                </div>
+                <div class="tv-stand"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Superpowers / Features Grid -->
+    <section class="section" id="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">ENGINEERED FOR POWER</span>
+                <h2 class="section-title">Built From The Ground Up for Perfection</h2>
+                <p class="section-desc">
+                    Experience an IPTV middleware and Android media player that refuses to compromise on speed, design, or user convenience.
+                </p>
+            </div>
+
+            <div class="features-grid">
+                <!-- Feature 1: Favorites & Reordering -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">❤️</div>
+                    <span class="feature-badge badge-gold">NEW IN V1.0.0</span>
+                    <h3>Favorites & Channel Reorder</h3>
+                    <p>
+                        Add any channel to your favorites with a single heart button click. 
+                        Reorder channels up and down directly from your TV remote D-Pad for a customized channel lineup.
+                    </p>
+                </div>
+
+                <!-- Feature 2: Lightning Fast Engine -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">⚡</div>
+                    <span class="feature-badge badge-purple">MEDIA3 EXOPLAYER</span>
+                    <h3>Zero-Buffering Stream Engine</h3>
+                    <p>
+                        Powered by Google's latest Media3 video stack with hardware decoding acceleration. 
+                        Handles massive 50,000+ channel playlists and instant zapping with no lag.
+                    </p>
+                </div>
+
+                <!-- Feature 3: Cinema VOD & Series -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">🎬</div>
+                    <span class="feature-badge badge-cyan">TMDB POWERED</span>
+                    <h3>Cinema VOD & Episode Tracker</h3>
+                    <p>
+                        Browse movies and series with official TMDb ratings, high-res posters, cast info, 
+                        and synopsis. Track multi-season series with resume playback progress bars.
+                    </p>
+                </div>
+
+                <!-- Feature 4: Multi-Audio & Subtitles -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">🔊</div>
+                    <span class="feature-badge badge-purple">DOLBY 5.1</span>
+                    <h3>Multi-Audio & Subtitle Picker</h3>
+                    <p>
+                        Switch between English, Spanish, French, or stadium commentary tracks on the fly. 
+                        Select embedded and external subtitles without interrupting playback.
+                    </p>
+                </div>
+
+                <!-- Feature 5: Multi-Theme Engine -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">🎨</div>
+                    <span class="feature-badge badge-gold">4 PALETTES</span>
+                    <h3>Signature Visual Themes</h3>
+                    <p>
+                        Choose from 4 handcrafted color schemes: Dreamania Purple, Cyber Neon, Onyx Dark 
+                        (OLED Cinema), and Royal Gold. Switch anytime with a single click.
+                    </p>
+                </div>
+
+                <!-- Feature 6: D-Pad Remote Navigation -->
+                <div class="feature-card">
+                    <div class="feature-icon-wrapper">🎮</div>
+                    <span class="feature-badge badge-cyan">100% REMOTE FRIENDLY</span>
+                    <h3>Seamless D-Pad TV Navigation</h3>
+                    <p>
+                        Designed specifically for Fire TV Stick, Google TV, NVIDIA Shield, and Android boxes. 
+                        High-contrast focus rings and quick shortcuts for every remote button.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Real Screenshots Interactive Showcase -->
+    <section class="showcase-section" id="screenshots">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">REAL APPLICATION SCREENSHOTS</span>
+                <h2 class="section-title">See Dreamania Player in Action</h2>
+                <p class="section-desc">
+                    Explore genuine 1080p and 4K captures of the Dreamania Player interface across live television, movie posters, playback OSD, and settings.
+                </p>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="tabs-header">
+                <button class="tab-btn active" onclick="switchTab(event, 'tab-dashboard')">📺 Main Launcher</button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-livetv')">❤️ Live TV & EPG</button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-player')">⚡ 4K Player & Audio</button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-movies')">🎬 Cinema VOD</button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-series')">🍿 Series & Episodes</button>
+                <button class="tab-btn" onclick="switchTab(event, 'tab-themes')">🎨 4 UI Themes</button>
+            </div>
+
+            <!-- Tab 1: Dashboard -->
+            <div id="tab-dashboard" class="tab-content active">
+                <div class="screen-preview-card" onclick="openLightbox('assets/img/screenshots/screen_hero_dashboard.png')">
+                    <img src="assets/img/screenshots/screen_hero_dashboard.png" alt="Main TV Dashboard">
+                    <div class="screen-caption">
+                        <div class="screen-caption-info">
+                            <h4>Futuristic Android TV Dashboard</h4>
+                            <p>Clean category navigation, quick status bar with VIP subscription expiration, digital clock, and D-Pad focus ring.</p>
+                        </div>
+                        <span class="btn btn-secondary btn-sm">🔍 Click to Expand</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Live TV & Guide -->
+            <div id="tab-livetv" class="tab-content">
+                <div class="screen-preview-card" onclick="openLightbox('assets/img/screenshots/screen_livetv_guide.png')">
+                    <img src="assets/img/screenshots/screen_livetv_guide.png" alt="Live TV and EPG Guide">
+                    <div class="screen-caption">
+                        <div class="screen-caption-info">
+                            <h4>Live TV Guide with Pinned Favorites & Reordering</h4>
+                            <p>Featuring category sidebar with ❤️ Favorites at top, real-time EPG program descriptions, resolution badges, and remote move mode.</p>
+                        </div>
+                        <span class="btn btn-secondary btn-sm">🔍 Click to Expand</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: 4K Player -->
+            <div id="tab-player" class="tab-content">
+                <div class="screen-preview-card" onclick="openLightbox('assets/img/screenshots/screen_player_osd.png')">
+                    <img src="assets/img/screenshots/screen_player_osd.png" alt="4K Video Player OSD">
+                    <div class="screen-caption">
+                        <div class="screen-caption-info">
+                            <h4>ExoPlayer 4K 60FPS with Live OSD & Quick Drawer</h4>
+                            <p>Top information bar with live stream quality indicator, Dolby Atmos audio, subtitle switcher, and left-side quick channel drawer.</p>
+                        </div>
+                        <span class="btn btn-secondary btn-sm">🔍 Click to Expand</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 4: Movies VOD -->
+            <div id="tab-movies" class="tab-content">
+                <div class="screen-preview-card" onclick="openLightbox('assets/img/screenshots/screen_vod_movies.png')">
+                    <img src="assets/img/screenshots/screen_vod_movies.png" alt="Cinema VOD Movies Grid">
+                    <div class="screen-caption">
+                        <div class="screen-caption-info">
+                            <h4>Cinema VOD Movie Poster Wall</h4>
+                            <p>High-resolution cover flow with TMDb star ratings, category filters, plot synopsis preview, and instant trailer playback.</p>
+                        </div>
+                        <span class="btn btn-secondary btn-sm">🔍 Click to Expand</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Series -->
+            <div id="tab-series" class="tab-content">
+                <div class="screen-preview-card" onclick="openLightbox('assets/img/screenshots/screen_series_detail.png')">
+                    <img src="assets/img/screenshots/screen_series_detail.png" alt="Series and Episodes Explorer">
+                    <div class="screen-caption">
+                        <div class="screen-caption-info">
+                            <h4>Multi-Season Series & Episode Tracker</h4>
+                            <p>Organized season tabs, episode thumbnails with duration, and visual progress bar allowing you to resume exactly where you left off.</p>
+                        </div>
+                        <span class="btn btn-secondary btn-sm">🔍 Click to Expand</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 6: Themes -->
+            <div id="tab-themes" class="tab-content">
+                <div class="screen-preview-card" onclick="openLightbox('assets/img/screenshots/screen_themes_showcase.png')">
+                    <img src="assets/img/screenshots/screen_themes_showcase.png" alt="Multi-Theme Customizer">
+                    <div class="screen-caption">
+                        <div class="screen-caption-info">
+                            <h4>4 Handcrafted Visual Themes</h4>
+                            <p>Switch seamlessly between Dreamania Purple, Cyber Neon, Onyx Dark (optimized for OLED TVs), and Royal Gold.</p>
+                        </div>
+                        <span class="btn btn-secondary btn-sm">🔍 Click to Expand</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3 Easy Setup Steps -->
+    <section class="section" id="setup">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">SIMPLE 3-STEP SETUP</span>
+                <h2 class="section-title">Up & Streaming in Under 2 Minutes</h2>
+                <p class="section-desc">
+                    Getting started with Dreamania Player is straightforward. No complex configurations or rooting required.
+                </p>
+            </div>
+
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-number">01</div>
+                    <h3>Download & Install APK</h3>
+                    <p>
+                        Download <code>DreamaniaPlayer.apk</code> directly from our official portal or use the <strong>Downloader app</strong> 
+                        on your Fire TV Stick / Android TV box.
+                    </p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">02</div>
+                    <h3>Connect Your Playlist</h3>
+                    <p>
+                        Log in using your <strong>Xtream Codes API</strong> (Server URL, Username, Password) or enter your 
+                        <strong>M3U playlist link</strong>. Multi-playlist support lets you store several accounts.
+                    </p>
+                </div>
+
+                <div class="step-card">
+                    <div class="step-number">03</div>
+                    <h3>Enjoy 4K Cinema Streaming</h3>
+                    <p>
+                        Browse your Live Channels, Cinema Movies, and TV Shows in high definition with automated EPG updates 
+                        and personalized favorites.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Device Compatibility Section -->
+    <section class="section">
+        <div class="container">
+            <div class="devices-banner">
+                <div>
+                    <h3 style="font-size: 24px; font-weight: 800; margin-bottom: 6px;">Universal Android Hardware Support</h3>
+                    <p style="color: var(--text-sub); font-size: 15px;">Fully tested and hardware-accelerated across all major Android platforms.</p>
+                </div>
+
+                <div class="devices-list">
+                    <div class="device-item">
+                        <span class="icon">📺</span>
+                        <span>Amazon Fire TV</span>
+                    </div>
+                    <div class="device-item">
+                        <span class="icon">⚡</span>
+                        <span>Google TV</span>
+                    </div>
+                    <div class="device-item">
+                        <span class="icon">🎮</span>
+                        <span>NVIDIA Shield</span>
+                    </div>
+                    <div class="device-item">
+                        <span class="icon">📦</span>
+                        <span>Android TV Box</span>
+                    </div>
+                    <div class="device-item">
+                        <span class="icon">📱</span>
+                        <span>Smartphones & Tabs</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download CTA Banner -->
+    <section class="section" id="download">
+        <div class="container">
+            <div class="download-box">
+                <img src="assets/img/icon.png" style="width: 80px; height: 80px; margin-bottom: 20px; filter: drop-shadow(0 6px 20px var(--primary-glow));">
+                <h2>Ready for the Ultimate IPTV Experience?</h2>
+                <p>
+                    Download Dreamania Player today. Enjoy seamless 4K playback, customizable channel ordering, 
+                    and multi-audio support with zero bloatware.
+                </p>
+
+                <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                    <a href="<?= htmlspecialchars($downloadUrl) ?>" class="btn btn-gold btn-lg">
+                        ⬇️ Download Dreamania Player APK (v<?= htmlspecialchars($appVersion) ?>)
+                    </a>
+                    <a href="<?= htmlspecialchars($portalUrl) ?>" class="btn btn-secondary btn-lg">
+                        🔐 Reseller / Admin Portal
+                    </a>
+                </div>
+
+                <!-- QR Code Box -->
+                <div>
+                    <div class="download-qr-box">
+                        <img src="<?= htmlspecialchars($qrUrl) ?>" alt="Scan to Download APK" class="download-qr-img">
+                        <div class="download-qr-text">
+                            <h5>Scan to Download on TV / Mobile</h5>
+                            <p>Point your phone camera or Fire TV Downloader app at this QR code to download instantly.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="section" id="faq">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">FREQUENTLY ASKED QUESTIONS</span>
+                <h2 class="section-title">Got Questions? We Have Answers</h2>
+                <p class="section-desc">
+                    Find quick answers regarding installation, playlist compatibility, and player controls.
+                </p>
+            </div>
+
+            <div class="faq-accordion">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How do I install Dreamania Player on Amazon Fire TV Stick?</span>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        To install on Fire TV, simply open the free <strong>Downloader app</strong> from the Amazon Appstore, 
+                        enter our download URL <code>https://dmibo.myskillscloud.com/download</code> (or scan the QR code above), 
+                        and select Install. Ensure "Install Unknown Apps" is turned ON in your Fire TV Developer Options.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Does Dreamania Player include any built-in TV channels?</span>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        No. Dreamania Player is a pure, high-performance media player. It does not provide or host any media streams. 
+                        You must enter your own legal IPTV playlist credentials via Xtream Codes API or M3U playlist format.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How do I add channels to my Favorites?</span>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        While in the channel list, select any channel and press the <strong>Red button</strong> or <strong>Long-Press the OK button</strong> 
+                        on your remote. The heart indicator turns red (❤️), and the channel will automatically appear in your pinned "❤️ Favorites" category at the top!
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How do I reorder or move channels in the list?</span>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        Select a channel and press the <strong>Yellow button</strong> on your TV remote. A convenient modal appears allowing you to 
+                        move the channel Up, Down, Move to Top, or enter interactive remote mode to position the channel wherever you prefer.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Can I switch between multiple audio languages or subtitles?</span>
+                        <span class="faq-icon">+</span>
+                    </div>
+                    <div class="faq-answer">
+                        Yes! While streaming, press OK or Down on your TV remote to open the bottom player OSD. Select the <strong>Audio</strong> 
+                        or <strong>Subtitles</strong> button to choose from all available Dolby Surround tracks and language commentaries.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-top">
+                <div class="brand">
+                    <img src="assets/img/icon.png" alt="Dreamania Player" style="width: 36px; height: 36px;">
+                    <div class="brand-text" style="font-size: 18px;">
+                        DREAMANIA <span>PLAYER</span>
+                    </div>
+                </div>
+
+                <ul class="footer-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#screenshots">Screenshots</a></li>
+                    <li><a href="<?= htmlspecialchars($downloadUrl) ?>">Download APK</a></li>
+                    <li><a href="<?= htmlspecialchars($portalUrl) ?>">Admin Portal</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-bottom">
+                <div>
+                    &copy; <?= date('Y') ?> Dreamania Player. All rights reserved. Powered by <strong>DreamaniaCode</strong>.
+                </div>
+                <div style="font-size: 12px; color: var(--text-muted);">
+                    Legal Notice: Dreamania Player is a standalone media player and does not provide, host, or sell any media content.
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Lightbox Zoom Modal -->
+    <div id="lightbox" class="lightbox-modal" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightbox-img" class="lightbox-img" src="" alt="Screenshot Full View" onclick="event.stopPropagation()">
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        // Tab Switcher
+        function switchTab(evt, tabId) {
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+
+            evt.currentTarget.classList.add('active');
+            const target = document.getElementById(tabId);
+            if (target) {
+                target.classList.add('active');
+            }
+        }
+
+        // FAQ Accordion
+        function toggleFaq(el) {
+            const item = el.parentElement;
+            const isOpen = item.classList.contains('open');
+
+            // Close all
+            document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+
+            if (!isOpen) {
+                item.classList.add('open');
+            }
+        }
+
+        // Lightbox
+        function openLightbox(src) {
+            const modal = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            img.src = src;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLightbox() {
+            const modal = document.getElementById('lightbox');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close lightbox on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+    </script>
+</body>
+</html>

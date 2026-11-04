@@ -7,7 +7,13 @@ RewriteCond %{REQUEST_FILENAME} -d
 RewriteRule ^ - [L]
 
 # Download route
-RewriteRule ^(download|app\.apk|DreamaniaIBOPro\.apk)/?$ api.php?action=download_apk [QSA,L]
+RewriteRule ^(download|app\.apk|DreamaniaPlayer\.apk|DreamaniaIBOPro\.apk)/?$ api.php?action=download_apk [QSA,L]
+
+# Admin & Reseller Portal routes
+RewriteRule ^(admin|portal|panel)/?$ index.php?panel=1 [QSA,L]
+
+# Landing page route
+RewriteRule ^landing/?$ landing.php [QSA,L]
 
 # API routes
 RewriteRule ^authenticate/?$ api.php?action=authenticate [QSA,L]

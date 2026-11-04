@@ -75,7 +75,7 @@ $msgType = '';
 if (isset($_POST['action']) && $_POST['action'] === 'logout') {
     $_SESSION = [];
     session_destroy();
-    header("Location: index.php");
+    header("Location: index.php?panel=1");
     exit;
 }
 
@@ -127,6 +127,13 @@ if (isset($_POST['action']) && $_POST['action'] === 'login') {
 $isLogged = !empty($_SESSION['logged_in']);
 $role = $_SESSION['role'] ?? 'guest';
 $resellerId = ($role === 'reseller') ? (int)($_SESSION['reseller_id'] ?? 0) : null;
+
+// Public Landing Page vs Management Portal
+$wantsPanel = isset($_GET['panel']) || isset($_GET['admin']) || (isset($_POST['action']) && in_array($_POST['action'], ['login', 'logout'], true));
+if (!$isLogged && !$wantsPanel) {
+    require __DIR__ . '/landing.php';
+    exit;
+}
 
 // Handle Authenticated Actions
 if ($isLogged && $_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -704,6 +711,7 @@ input:focus, select:focus, textarea:focus {
     </a>
 
     <div class="nav-actions">
+        <a href="landing.php" class="btn btn-secondary btn-sm" title="View Public Landing Page">🌐 Landing Page</a>
         <?php if ($apkFileExists): ?>
             <a href="download" class="btn btn-secondary btn-sm">📲 Download APK</a>
         <?php endif; ?>
@@ -753,6 +761,9 @@ input:focus, select:focus, textarea:focus {
 
                 <button type="submit" class="btn" style="width:100%; padding: 12px; margin-top: 8px;">Access Portal</button>
             </form>
+            <div style="text-align: center; margin-top: 16px;">
+                <a href="landing.php" style="color: var(--muted); font-size: 13px; text-decoration: none;">◀ Back to Main Landing Page</a>
+            </div>
         </div>
 
     <?php else: ?>
