@@ -175,21 +175,57 @@ class DB {
             last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )");
 
+        // Orders & Payments table (Client activations & Reseller credits)
+        $pdo->exec("CREATE TABLE IF NOT EXISTS orders (
+            id {$autoId},
+            order_type VARCHAR(50) NOT NULL,
+            mac_address VARCHAR(50),
+            device_key VARCHAR(50),
+            reseller_id INT DEFAULT 0,
+            plan VARCHAR(50) NOT NULL,
+            amount_dh NUMERIC(10,2) NOT NULL,
+            credits INT DEFAULT 0,
+            payment_method VARCHAR(50) NOT NULL,
+            customer_name VARCHAR(255),
+            customer_email VARCHAR(255),
+            customer_phone VARCHAR(50),
+            transaction_ref VARCHAR(255),
+            proof_file VARCHAR(500),
+            status VARCHAR(50) DEFAULT 'pending',
+            admin_notes TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+
         // Default settings
         $defaults = [
-            'admin_password'   => '200600',
-            'app_name'         => 'Dreamania Player',
-            'note_title'       => 'Dreamania Player',
-            'note_content'     => 'Welcome to Dreamania Player! Enjoy your premium experience.',
-            'trial_days'       => '7',
-            'default_expiry'   => '2030-01-01',
-            'price'            => '0',
-            'theme'            => 'purple',
-            'panel_theme'      => 'purple',
-            'qr_url'           => '',
-            'subtitle_url'     => '',
-            'app_version'      => '1.0.0',
-            'apk_link'         => 'https://dm.lumineasy.com/download'
+            'admin_password'       => '200600',
+            'app_name'             => 'Dreamania Player',
+            'note_title'           => 'Dreamania Player',
+            'note_content'         => 'Welcome to Dreamania Player! Enjoy your premium experience.',
+            'trial_days'           => '7',
+            'default_expiry'       => '2030-01-01',
+            'price'                => '0',
+            'theme'                => 'purple',
+            'panel_theme'          => 'purple',
+            'qr_url'               => '',
+            'subtitle_url'         => '',
+            'app_version'          => '1.0.0',
+            'apk_link'             => 'https://dm.lumineasy.com/download',
+            'paypal_email'         => 'contact@lumineasy.com',
+            'paypal_me_link'       => 'https://paypal.me/dreamaniacode',
+            'rib_bank_name'        => 'CIH BANK',
+            'rib_account_name'     => 'DREAMANIA MEDIA',
+            'rib_number'           => '230 780 4567890123456789 12',
+            'rib_swift'            => 'CIHMMAMC',
+            'whatsapp_number'      => '+212600000000',
+            'price_client_1y'      => '50',
+            'price_client_life'    => '150',
+            'price_reseller_10'    => '100',
+            'price_reseller_20'    => '180',
+            'price_reseller_30'    => '240',
+            'price_reseller_50'    => '350',
+            'price_reseller_100'   => '600'
         ];
 
         foreach ($defaults as $k => $v) {
@@ -235,6 +271,9 @@ class DB {
             }
             if (!in_array('password', $pExisting)) {
                 $pdo->exec("ALTER TABLE playlists ADD COLUMN password TEXT");
+            }
+            if (!in_array('is_protected', $pExisting)) {
+                $pdo->exec("ALTER TABLE playlists ADD COLUMN is_protected TEXT DEFAULT '0'");
             }
         }
     }
@@ -347,6 +386,39 @@ class DB {
         $stmt->execute([$id]);
         $res = $stmt->fetch();
         return $res ?: null;
+    }
+
+    public static function getDeviceByMac(string $mac): ?array {
+        $mac = self::normalizeMac($mac);
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("SELECT * FROM devices WHERE mac_address = ?");
+        $stmt->execute([$mac]);
+        $res = $stmt->fetch();
+        return $res ?: null;
+    }
+
+    public static function getDeviceByMacAndKey(string $mac, string $deviceKey, bool $autoCreateIfMissing = false): ?array {
+        $mac = self::normalizeMac($mac);
+        $deviceKey = trim($deviceKey);
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("SELECT * FROM devices WHERE mac_address = ?");
+        $stmt->execute([$mac]);
+        $device = $stmt->fetch();
+        if ($device) {
+            if ($device['device_key'] === $deviceKey) {
+                return $device;
+            }
+            return null;
+        }
+        if ($autoCreateIfMissing && strlen($deviceKey) === 6 && ctype_digit($deviceKey)) {
+            $trialDays = (int) self::getSetting('trial_days', '7');
+            $expireDate = date('Y-m-d', strtotime("+{$trialDays} days"));
+            $ins = $pdo->prepare("INSERT INTO devices (mac_address, device_key, android_id, app_type, app_version, expire_date, is_trial, is_paid, parent_control, status)
+                                   VALUES (?, ?, '', 'tv', '1.0.0', ?, 1, 0, '0000', 'active')");
+            $ins->execute([$mac, $deviceKey, $expireDate]);
+            return self::getDeviceByMac($mac);
+        }
+        return null;
     }
 
     public static function updateDevice(int $id, array $data): bool {
@@ -591,6 +663,71 @@ class DB {
         ]);
     }
 
+    public static function addXtreamPlaylist(string $mac, string $name, string $serverUrl, string $username, string $password, bool $isProtected = false): bool {
+        $mac = self::normalizeMac($mac);
+        $device = self::getOrCreateDeviceManual($mac);
+        $pdo = self::getConnection();
+
+        $serverUrl = rtrim(trim($serverUrl), '/');
+        $stmtDns = $pdo->prepare("SELECT id FROM dns WHERE url LIKE ? LIMIT 1");
+        $stmtDns->execute([$serverUrl . '%']);
+        $dnsId = $stmtDns->fetchColumn();
+        if (!$dnsId) {
+            $host = parse_url($serverUrl, PHP_URL_HOST) ?: 'Custom Xtream Server';
+            $insDns = $pdo->prepare("INSERT INTO dns (name, url) VALUES (?, ?)");
+            $insDns->execute([$host, $serverUrl]);
+            $dnsId = (int)$pdo->lastInsertId();
+        }
+
+        $playlistUrl = "{$serverUrl}/player_api.php?username=" . urlencode($username) . "&password=" . urlencode($password);
+        $playlistName = trim($name) ?: ('Xtream (' . $username . ')');
+        $prot = $isProtected ? '1' : '0';
+
+        $stmt = $pdo->prepare("INSERT INTO playlists (device_id, mac_address, name, type, url, dns_id, username, password, is_protected, expiry)
+                               VALUES (?, ?, ?, 'ibo', ?, ?, ?, ?, ?, ?)");
+        return $stmt->execute([
+            $device['id'],
+            $mac,
+            $playlistName,
+            $playlistUrl,
+            (int)$dnsId,
+            $username,
+            $password,
+            $prot,
+            $device['expire_date']
+        ]);
+    }
+
+    public static function addM3uPlaylist(string $mac, string $name, string $m3uUrl, bool $isProtected = false): bool {
+        $mac = self::normalizeMac($mac);
+        $device = self::getOrCreateDeviceManual($mac);
+        $pdo = self::getConnection();
+        $prot = $isProtected ? '1' : '0';
+
+        $stmt = $pdo->prepare("INSERT INTO playlists (device_id, mac_address, name, type, url, is_protected, expiry)
+                               VALUES (?, ?, ?, 'm3u', ?, ?, ?)");
+        return $stmt->execute([
+            $device['id'],
+            $mac,
+            trim($name) ?: 'My M3U Playlist',
+            trim($m3uUrl),
+            $prot,
+            $device['expire_date']
+        ]);
+    }
+
+    public static function togglePlaylistProtection(int $id, string $mac): bool {
+        $mac = self::normalizeMac($mac);
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("SELECT is_protected FROM playlists WHERE id = ? AND mac_address = ?");
+        $stmt->execute([$id, $mac]);
+        $curr = $stmt->fetchColumn();
+        if ($curr === false) return false;
+        $next = ($curr === '1') ? '0' : '1';
+        $up = $pdo->prepare("UPDATE playlists SET is_protected = ? WHERE id = ? AND mac_address = ?");
+        return $up->execute([$next, $id, $mac]);
+    }
+
     public static function updatePlaylist(int $id, array $data): bool {
         $pdo = self::getConnection();
         $fields = [];
@@ -654,5 +791,138 @@ class DB {
         $limit = max(1, min(500, $limit));
         $stmt = $pdo->query("SELECT * FROM used_lines ORDER BY id DESC LIMIT {$limit}");
         return $stmt->fetchAll();
+    }
+
+    // --- Order & Activation Operations ---
+
+    public static function createOrder(array $data): int {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("INSERT INTO orders (
+            order_type, mac_address, device_key, reseller_id, plan, amount_dh, credits,
+            payment_method, customer_name, customer_email, customer_phone, transaction_ref,
+            proof_file, status, admin_notes, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+
+        $stmt->execute([
+            $data['order_type'] ?? 'client',
+            !empty($data['mac_address']) ? self::normalizeMac($data['mac_address']) : null,
+            $data['device_key'] ?? null,
+            (int)($data['reseller_id'] ?? 0),
+            $data['plan'] ?? 'sub_1y',
+            (float)($data['amount_dh'] ?? 0.0),
+            (int)($data['credits'] ?? 0),
+            $data['payment_method'] ?? 'rib',
+            $data['customer_name'] ?? null,
+            $data['customer_email'] ?? null,
+            $data['customer_phone'] ?? null,
+            $data['transaction_ref'] ?? null,
+            $data['proof_file'] ?? null,
+            $data['admin_notes'] ?? null
+        ]);
+
+        return (int) $pdo->lastInsertId();
+    }
+
+    public static function getAllOrders(?string $type = null, ?string $status = null): array {
+        $pdo = self::getConnection();
+        $sql = "SELECT o.*, r.username as reseller_username, r.name as reseller_name 
+                FROM orders o 
+                LEFT JOIN resellers r ON o.reseller_id = r.id";
+        $where = [];
+        $params = [];
+        if ($type) {
+            $where[] = "o.order_type = ?";
+            $params[] = $type;
+        }
+        if ($status) {
+            $where[] = "o.status = ?";
+            $params[] = $status;
+        }
+        if (!empty($where)) {
+            $sql .= " WHERE " . implode(' AND ', $where);
+        }
+        $sql .= " ORDER BY o.id DESC";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+    public static function getOrderById(int $id): ?array {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("SELECT o.*, r.username as reseller_username, r.name as reseller_name 
+                               FROM orders o 
+                               LEFT JOIN resellers r ON o.reseller_id = r.id 
+                               WHERE o.id = ?");
+        $stmt->execute([$id]);
+        $order = $stmt->fetch();
+        return $order ?: null;
+    }
+
+    public static function getOrdersForDevice(string $mac): array {
+        $mac = self::normalizeMac($mac);
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("SELECT * FROM orders WHERE mac_address = ? ORDER BY id DESC");
+        $stmt->execute([$mac]);
+        return $stmt->fetchAll();
+    }
+
+    public static function getOrdersForReseller(int $resellerId): array {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("SELECT * FROM orders WHERE reseller_id = ? ORDER BY id DESC");
+        $stmt->execute([$resellerId]);
+        return $stmt->fetchAll();
+    }
+
+    public static function approveOrder(int $id, ?string $adminNotes = null): array {
+        $order = self::getOrderById($id);
+        if (!$order) {
+            return ['status' => false, 'message' => 'Order not found'];
+        }
+        if ($order['status'] === 'approved') {
+            return ['status' => false, 'message' => 'Order already approved'];
+        }
+
+        $pdo = self::getConnection();
+
+        if ($order['order_type'] === 'client') {
+            if (empty($order['mac_address'])) {
+                return ['status' => false, 'message' => 'No MAC address associated with this client order'];
+            }
+            $mac = self::normalizeMac($order['mac_address']);
+            $device = self::getOrCreateDeviceManual($mac);
+            $plan = $order['plan'] ?: 'sub_1y';
+            $actRes = self::activateSubscription($device['id'], $plan);
+            if (!$actRes['status']) {
+                return ['status' => false, 'message' => 'Failed to activate device: ' . $actRes['message']];
+            }
+        } elseif ($order['order_type'] === 'reseller') {
+            $resellerId = (int)$order['reseller_id'];
+            $credits = (int)$order['credits'];
+            if ($resellerId <= 0 || $credits <= 0) {
+                return ['status' => false, 'message' => 'Invalid reseller order data'];
+            }
+            $up = $pdo->prepare("UPDATE resellers SET credits = credits + ? WHERE id = ?");
+            $up->execute([$credits, $resellerId]);
+        }
+
+        $notes = $adminNotes !== null ? $adminNotes : ($order['admin_notes'] ?? '');
+        $stmt = $pdo->prepare("UPDATE orders SET status = 'approved', admin_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        $stmt->execute([$notes, $id]);
+
+        return ['status' => true, 'message' => 'Order approved and activated successfully'];
+    }
+
+    public static function rejectOrder(int $id, ?string $adminNotes = null): bool {
+        $pdo = self::getConnection();
+        $notes = $adminNotes ?: 'Rejected by admin';
+        $stmt = $pdo->prepare("UPDATE orders SET status = 'rejected', admin_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        return $stmt->execute([$notes, $id]);
+    }
+
+    public static function addResellerCredits(int $resellerId, int $credits): bool {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("UPDATE resellers SET credits = credits + ? WHERE id = ?");
+        return $stmt->execute([$credits, $resellerId]);
     }
 }

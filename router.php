@@ -40,6 +40,16 @@ if ($uri === '/qr.php') {
     exit;
 }
 
+if ($uri === '/device' || $uri === '/upload' || $uri === '/manage' || $uri === '/manage-playlist' || $uri === '/playlist') {
+    require __DIR__ . '/device.php';
+    exit;
+}
+
+if ($uri === '/credits') {
+    require __DIR__ . '/credits.php';
+    exit;
+}
+
 if ($uri === '/admin' || $uri === '/portal' || $uri === '/panel') {
     $_GET['panel'] = '1';
     require __DIR__ . '/index.php';

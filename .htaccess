@@ -12,6 +12,12 @@ RewriteRule ^(download|app\.apk|DreamaniaPlayer\.apk|DreamaniaIBOPro\.apk)/?$ ap
 # Admin & Reseller Portal routes
 RewriteRule ^(admin|portal|panel)/?$ index.php?panel=1 [QSA,L]
 
+# End-user device & playlist portal (inspired by iboplayer.com)
+RewriteRule ^(device|upload|manage-playlist|manage|playlist)/?$ device.php [QSA,L]
+
+# Reseller credits wholesale portal
+RewriteRule ^credits/?$ credits.php [QSA,L]
+
 # Landing page route
 RewriteRule ^landing/?$ landing.php [QSA,L]
 

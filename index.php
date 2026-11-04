@@ -327,14 +327,36 @@ if ($isLogged && $_SERVER['REQUEST_METHOD'] === 'POST') {
             elseif ($formType === 'update_settings' && $role === 'admin') {
                 $settingsToUpdate = [
                     'admin_password', 'app_name', 'note_title', 'note_content',
-                    'trial_days', 'default_expiry', 'price', 'apk_link'
+                    'trial_days', 'default_expiry', 'price', 'apk_link',
+                    'paypal_email', 'paypal_me_link', 'rib_bank_name', 'rib_account_name',
+                    'rib_number', 'rib_swift', 'whatsapp_number',
+                    'price_client_1y', 'price_client_life',
+                    'price_reseller_10', 'price_reseller_20', 'price_reseller_30', 'price_reseller_50', 'price_reseller_100'
                 ];
                 foreach ($settingsToUpdate as $sKey) {
                     if (isset($_POST[$sKey])) {
                         DB::setSetting($sKey, trim((string)$_POST[$sKey]));
                     }
                 }
-                $msg = "System settings updated successfully!";
+                $msg = "System settings & pricing updated successfully!";
+                $msgType = "success";
+            }
+
+            // 11. Approve Order (Admin Only)
+            elseif ($formType === 'approve_order' && $role === 'admin') {
+                $orderId = (int)($_POST['order_id'] ?? 0);
+                $adminNotes = trim($_POST['admin_notes'] ?? '');
+                $res = DB::approveOrder($orderId, $adminNotes ?: null);
+                $msg = $res['message'];
+                $msgType = $res['status'] ? 'success' : 'error';
+            }
+
+            // 12. Reject Order (Admin Only)
+            elseif ($formType === 'reject_order' && $role === 'admin') {
+                $orderId = (int)($_POST['order_id'] ?? 0);
+                $adminNotes = trim($_POST['admin_notes'] ?? '');
+                DB::rejectOrder($orderId, $adminNotes ?: 'Rejected by admin');
+                $msg = "Order #{$orderId} has been rejected.";
                 $msgType = "success";
             }
 
@@ -352,9 +374,18 @@ $dnsList = ($isLogged && $role === 'admin') ? DB::getAllDns() : [];
 $resellersList = ($isLogged && $role === 'admin') ? DB::getAllResellers() : [];
 $recentLines = ($isLogged && $role === 'admin') ? DB::getRecentLineActivity(30) : [];
 $settings = $isLogged ? DB::getAllSettings() : [];
+$ordersList = ($isLogged && $role === 'admin') ? DB::getAllOrders() : [];
+$pendingOrdersCount = 0;
+if ($role === 'admin') {
+    foreach ($ordersList as $o) {
+        if ($o['status'] === 'pending') {
+            $pendingOrdersCount++;
+        }
+    }
+}
 
 $activeTab = $_GET['tab'] ?? 'playlists';
-if ($role === 'reseller' && in_array($activeTab, ['dns', 'settings', 'resellers', 'lines'])) {
+if ($role === 'reseller' && in_array($activeTab, ['dns', 'settings', 'resellers', 'lines', 'orders'])) {
     $activeTab = 'playlists';
 }
 
@@ -711,6 +742,8 @@ input:focus, select:focus, textarea:focus {
     </a>
 
     <div class="nav-actions">
+        <a href="device.php" class="btn btn-secondary btn-sm" target="_blank" title="End-User Device &amp; Playlists Portal">📺 Device Portal</a>
+        <a href="credits.php" class="btn btn-secondary btn-sm" target="_blank" title="Reseller Credits Portal">⚡ Reseller Credits</a>
         <a href="landing.php" class="btn btn-secondary btn-sm" title="View Public Landing Page">🌐 Landing Page</a>
         <?php if ($apkFileExists): ?>
             <a href="download" class="btn btn-secondary btn-sm">📲 Download APK</a>
@@ -814,11 +847,24 @@ input:focus, select:focus, textarea:focus {
             <a href="?tab=playlists" class="tab-link <?= $activeTab === 'playlists' ? 'active' : '' ?>">📋 Registered Devices &amp; Playlists</a>
             <a href="?tab=add_ibo" class="tab-link <?= $activeTab === 'add_ibo' ? 'active' : '' ?>">⚡ Add Xtream User</a>
             <a href="?tab=add_m3u" class="tab-link <?= $activeTab === 'add_m3u' ? 'active' : '' ?>">📄 Add M3U Playlist</a>
+            <?php if ($role === 'reseller'): ?>
+                <a href="credits.php" class="tab-link" style="color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); background: rgba(245, 158, 11, 0.08);">
+                    💳 Buy Credits (<?= (int)($_SESSION['reseller_credits'] ?? 0) ?> Cr)
+                </a>
+            <?php endif; ?>
             <?php if ($role === 'admin'): ?>
+                <a href="?tab=orders" class="tab-link <?= $activeTab === 'orders' ? 'active' : '' ?>" style="<?= $pendingOrdersCount > 0 ? 'border-color: #ef4444;' : '' ?>">
+                    💰 Orders &amp; Activations
+                    <?php if ($pendingOrdersCount > 0): ?>
+                        <span style="background: #ef4444; color: #fff; padding: 2px 7px; border-radius: 10px; font-size: 11px; margin-left: 4px; font-weight: 800;">
+                            <?= $pendingOrdersCount ?>
+                        </span>
+                    <?php endif; ?>
+                </a>
                 <a href="?tab=resellers" class="tab-link <?= $activeTab === 'resellers' ? 'active' : '' ?>">👥 Resellers</a>
                 <a href="?tab=dns" class="tab-link <?= $activeTab === 'dns' ? 'active' : '' ?>">🌐 DNS Portals</a>
                 <a href="?tab=lines" class="tab-link <?= $activeTab === 'lines' ? 'active' : '' ?>">📈 Used Lines</a>
-                <a href="?tab=settings" class="tab-link <?= $activeTab === 'settings' ? 'active' : '' ?>">⚙️ Settings &amp; APK</a>
+                <a href="?tab=settings" class="tab-link <?= $activeTab === 'settings' ? 'active' : '' ?>">⚙️ Settings &amp; Pricing</a>
             <?php endif; ?>
         </nav>
 
@@ -1262,56 +1308,268 @@ input:focus, select:focus, textarea:focus {
                 </div>
             </div>
 
-        <?php elseif ($activeTab === 'settings' && $role === 'admin'): ?>
-            <!-- Settings & APK Upload -->
-            <div class="grid-2">
-                <div class="card">
-                    <h2>⚙️ Global System Configuration</h2>
-                    <form method="post">
-                        <input type="hidden" name="form_type" value="update_settings">
-                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+        <?php elseif ($activeTab === 'orders' && $role === 'admin'): ?>
+            <!-- Orders & Activations Management -->
+            <div class="card">
+                <h2>
+                    <span>💰 Orders &amp; Activations (<?= count($ordersList) ?> total, <?= $pendingOrdersCount ?> pending)</span>
+                    <div style="font-size: 13px; font-weight: normal; display: flex; gap: 8px;">
+                        <a href="?tab=orders" class="btn btn-sm btn-secondary">All (<?= count($ordersList) ?>)</a>
+                        <a href="?tab=orders&status=pending" class="btn btn-sm" style="background:#f59e0b; color:#000;">Pending (<?= $pendingOrdersCount ?>)</a>
+                    </div>
+                </h2>
 
+                <?php
+                    $filterStatus = $_GET['status'] ?? '';
+                    $displayOrders = $ordersList;
+                    if ($filterStatus === 'pending') {
+                        $displayOrders = array_filter($ordersList, fn($o) => $o['status'] === 'pending');
+                    }
+                ?>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Type</th>
+                                <th>Target / Customer</th>
+                                <th>Plan / Credits</th>
+                                <th>Amount</th>
+                                <th>Payment Method</th>
+                                <th>Reference / Proof</th>
+                                <th>Status</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($displayOrders)): ?>
+                                <tr>
+                                    <td colspan="9" style="text-align:center; padding:30px; color:var(--muted);">
+                                        No orders found matching criteria.
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($displayOrders as $ord): ?>
+                                    <tr>
+                                        <td>
+                                            <strong>#<?= (int)$ord['id'] ?></strong>
+                                            <div style="font-size:11px; color:var(--muted);"><?= htmlspecialchars(substr($ord['created_at'], 0, 16)) ?></div>
+                                        </td>
+                                        <td>
+                                            <?php if ($ord['order_type'] === 'client'): ?>
+                                                <span class="status-pill status-active">📺 End-User TV</span>
+                                            <?php else: ?>
+                                                <span class="status-pill status-trial">⚡ Reseller Pack</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($ord['order_type'] === 'client'): ?>
+                                                <span class="mac-badge"><?= htmlspecialchars($ord['mac_address'] ?? '') ?></span>
+                                                <?php if (!empty($ord['customer_name'])): ?>
+                                                    <div style="font-size:12px; margin-top:2px;">
+                                                        <?= htmlspecialchars($ord['customer_name']) ?>
+                                                        <?= !empty($ord['customer_phone']) ? ' (' . htmlspecialchars($ord['customer_phone']) . ')' : '' ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <strong><?= htmlspecialchars($ord['reseller_name'] ?: ($ord['reseller_username'] ?? 'Reseller #' . $ord['reseller_id'])) ?></strong>
+                                                <div style="font-size:11px; color:var(--muted);">User: <?= htmlspecialchars($ord['reseller_username'] ?? '') ?></div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($ord['order_type'] === 'client'): ?>
+                                                <strong><?= $ord['plan'] === 'sub_lifetime' ? '⭐ Lifetime VIP' : '1 Year Activation' ?></strong>
+                                            <?php else: ?>
+                                                <strong style="color:#fbbf24;">+<?= (int)$ord['credits'] ?> Credits (Years)</strong>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <strong style="color:var(--accent);"><?= htmlspecialchars((string)$ord['amount_dh']) ?> DH</strong>
+                                        </td>
+                                        <td>
+                                            <span style="text-transform:uppercase; font-size:11px; font-weight:700; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.06);">
+                                                <?= htmlspecialchars($ord['payment_method']) ?>
+                                            </span>
+                                            <?php if (!empty($ord['transaction_ref'])): ?>
+                                                <div style="font-size:11px; color:var(--muted); font-family:monospace; margin-top:2px;">
+                                                    Ref: <?= htmlspecialchars($ord['transaction_ref']) ?>
+                                                </div>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if (!empty($ord['proof_file']) && file_exists(__DIR__ . '/' . $ord['proof_file'])): ?>
+                                                <a href="<?= htmlspecialchars($ord['proof_file']) ?>" target="_blank" class="btn btn-sm btn-secondary" style="font-size:11px; padding:3px 8px;">
+                                                    📎 View Receipt
+                                                </a>
+                                            <?php else: ?>
+                                                <span style="font-size:11px; color:var(--muted);">No file</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td>
+                                            <?php if ($ord['status'] === 'approved'): ?>
+                                                <span class="status-pill status-active">✅ Approved</span>
+                                            <?php elseif ($ord['status'] === 'rejected'): ?>
+                                                <span class="status-pill status-expired">❌ Rejected</span>
+                                            <?php else: ?>
+                                                <span class="status-pill status-trial">⏳ Pending</span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td style="text-align:right; white-space:nowrap;">
+                                            <?php if ($ord['status'] === 'pending'): ?>
+                                                <form method="post" style="display:inline;" onsubmit="return confirm('Approve order #<?= (int)$ord['id'] ?> and activate immediately?');">
+                                                    <input type="hidden" name="form_type" value="approve_order">
+                                                    <input type="hidden" name="order_id" value="<?= (int)$ord['id'] ?>">
+                                                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                                                    <button type="submit" class="btn btn-sm" style="background:#10b981; color:#fff; border:none;" title="Approve &amp; Activate">
+                                                        ✅ Approve
+                                                    </button>
+                                                </form>
+                                                <form method="post" style="display:inline; margin-left:4px;" onsubmit="return confirm('Reject order #<?= (int)$ord['id'] ?>?');">
+                                                    <input type="hidden" name="form_type" value="reject_order">
+                                                    <input type="hidden" name="order_id" value="<?= (int)$ord['id'] ?>">
+                                                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                                                    <button type="submit" class="btn btn-sm btn-secondary" style="background:rgba(239,68,68,0.2); color:#f87171; border-color:#ef4444;" title="Reject">
+                                                        ❌
+                                                    </button>
+                                                </form>
+                                            <?php else: ?>
+                                                <span style="font-size:11px; color:var(--muted);">Completed</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        <?php elseif ($activeTab === 'settings' && $role === 'admin'): ?>
+            <!-- Settings & Configuration (All Tabs) -->
+            <form method="post">
+                <input type="hidden" name="form_type" value="update_settings">
+                <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+
+                <div class="grid-2">
+                    <!-- 1. Global System Settings -->
+                    <div class="card">
+                        <h2>⚙️ Global System Configuration</h2>
                         <div class="form-group">
                             <label for="admin_password">Admin Master Password</label>
                             <input type="text" id="admin_password" name="admin_password" value="<?= htmlspecialchars($settings['admin_password'] ?? '200600') ?>" required>
                         </div>
-
                         <div class="form-group">
                             <label for="app_name">Application Brand Name</label>
                             <input type="text" id="app_name" name="app_name" value="<?= htmlspecialchars($settings['app_name'] ?? 'Dreamania Player') ?>" required>
                         </div>
-
                         <div class="form-group">
                             <label for="trial_days">Default Trial Duration (Days)</label>
                             <input type="number" id="trial_days" name="trial_days" value="<?= htmlspecialchars($settings['trial_days'] ?? '7') ?>" min="1">
                         </div>
-
                         <div class="form-group">
                             <label for="apk_link">APK Download URL</label>
                             <input type="url" id="apk_link" name="apk_link" value="<?= htmlspecialchars($settings['apk_link'] ?? 'https://dm.lumineasy.com/download') ?>">
                         </div>
+                    </div>
 
-                        <button type="submit" class="btn" style="width:100%;">Save Global Settings</button>
-                    </form>
-                </div>
-
-                <div class="card">
-                    <h2>📲 Application APK File</h2>
-                    <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">
-                        Upload or replace the client APK served at <code>/download</code>.
-                    </p>
-                    <form method="post" enctype="multipart/form-data">
-                        <input type="hidden" name="form_type" value="upload_apk_file">
-                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
-
+                    <!-- 2. Banking & PayPal Configuration -->
+                    <div class="card">
+                        <h2>🏦 Bank Details (RIB) &amp; PayPal Gateways</h2>
                         <div class="form-group">
-                            <label for="apk_file">Select APK File</label>
-                            <input type="file" id="apk_file" name="apk_file" accept=".apk" required>
+                            <label for="rib_bank_name">Moroccan Bank Name</label>
+                            <input type="text" id="rib_bank_name" name="rib_bank_name" value="<?= htmlspecialchars($settings['rib_bank_name'] ?? 'CIH BANK') ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="rib_account_name">Bank Account Holder (Titulaire)</label>
+                            <input type="text" id="rib_account_name" name="rib_account_name" value="<?= htmlspecialchars($settings['rib_account_name'] ?? 'DREAMANIA MEDIA') ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="rib_number">24-Digit RIB Number</label>
+                            <input type="text" id="rib_number" name="rib_number" value="<?= htmlspecialchars($settings['rib_number'] ?? '230 780 4567890123456789 12') ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="rib_swift">SWIFT / BIC Code</label>
+                            <input type="text" id="rib_swift" name="rib_swift" value="<?= htmlspecialchars($settings['rib_swift'] ?? 'CIHMMAMC') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="paypal_email">PayPal Email Address</label>
+                            <input type="email" id="paypal_email" name="paypal_email" value="<?= htmlspecialchars($settings['paypal_email'] ?? 'contact@lumineasy.com') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="paypal_me_link">PayPal.me Direct Link</label>
+                            <input type="url" id="paypal_me_link" name="paypal_me_link" value="<?= htmlspecialchars($settings['paypal_me_link'] ?? 'https://paypal.me/dreamaniacode') ?>">
+                        </div>
+                        <div class="form-group">
+                            <label for="whatsapp_number">Support WhatsApp Number (with country code)</label>
+                            <input type="text" id="whatsapp_number" name="whatsapp_number" value="<?= htmlspecialchars($settings['whatsapp_number'] ?? '+212600000000') ?>">
+                        </div>
+                    </div>
+
+                    <!-- 3. Pricing Configuration (Client & Reseller) -->
+                    <div class="card">
+                        <h2>💵 Pricing Configuration (Moroccan Dirham - DH)</h2>
+                        <h4 style="color:var(--accent); margin:12px 0 6px;">End-User (Particulier) Pricing</h4>
+                        <div class="form-group">
+                            <label for="price_client_1y">1 Year Client Activation (DH)</label>
+                            <input type="number" id="price_client_1y" name="price_client_1y" value="<?= htmlspecialchars($settings['price_client_1y'] ?? '50') ?>" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="price_client_life">Lifetime VIP Client Activation (DH)</label>
+                            <input type="number" id="price_client_life" name="price_client_life" value="<?= htmlspecialchars($settings['price_client_life'] ?? '150') ?>" required>
                         </div>
 
-                        <button type="submit" class="btn btn-secondary" style="width:100%;">Upload &amp; Replace APK</button>
-                    </form>
+                        <h4 style="color:#fbbf24; margin:16px 0 6px;">Reseller Wholesale Credit Packs (1 Credit = 1 Year)</h4>
+                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                            <div class="form-group">
+                                <label for="price_reseller_10">10 Credits Pack (DH)</label>
+                                <input type="number" id="price_reseller_10" name="price_reseller_10" value="<?= htmlspecialchars($settings['price_reseller_10'] ?? '100') ?>" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="price_reseller_20">20 Credits Pack (DH)</label>
+                                <input type="number" id="price_reseller_20" name="price_reseller_20" value="<?= htmlspecialchars($settings['price_reseller_20'] ?? '180') ?>" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="price_reseller_30">30 Credits Pack (DH)</label>
+                                <input type="number" id="price_reseller_30" name="price_reseller_30" value="<?= htmlspecialchars($settings['price_reseller_30'] ?? '240') ?>" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="price_reseller_50">50 Credits Pack (DH)</label>
+                                <input type="number" id="price_reseller_50" name="price_reseller_50" value="<?= htmlspecialchars($settings['price_reseller_50'] ?? '350') ?>" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="price_reseller_100">100 Credits Pack (DH)</label>
+                            <input type="number" id="price_reseller_100" name="price_reseller_100" value="<?= htmlspecialchars($settings['price_reseller_100'] ?? '600') ?>" required>
+                        </div>
+                    </div>
+
+                    <!-- 4. Save Button & APK Upload -->
+                    <div>
+                        <button type="submit" class="btn" style="width:100%; margin-bottom:20px; padding:16px; font-size:16px;">
+                            💾 Save All Settings &amp; Pricing Changes
+                        </button>
+                    </div>
                 </div>
+            </form>
+
+            <div class="card" style="margin-top:20px;">
+                <h2>📲 Application APK File</h2>
+                <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">
+                    Upload or replace the client APK served at <code>/download</code>.
+                </p>
+                <form method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="form_type" value="upload_apk_file">
+                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+
+                    <div class="form-group">
+                        <label for="apk_file">Select APK File</label>
+                        <input type="file" id="apk_file" name="apk_file" accept=".apk" required>
+                    </div>
+
+                    <button type="submit" class="btn btn-secondary" style="width:100%;">Upload &amp; Replace APK</button>
+                </form>
+            </div>
             </div>
 
         <?php endif; ?>
