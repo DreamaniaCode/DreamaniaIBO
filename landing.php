@@ -11,7 +11,7 @@ $portalUrl = "index.php?panel=1";
 $appVersion = "1.0.0";
 $appSize = "14.5 MB";
 $minAndroid = "5.0 (Lollipop) to Android 14+";
-$qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dmibo.myskillscloud.com') . "/download");
+$qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dm.lumineasy.com') . "/download");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -1278,7 +1278,7 @@ $qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dmib
                     </div>
                     <div class="faq-answer">
                         To install on Fire TV, simply open the free <strong>Downloader app</strong> from the Amazon Appstore, 
-                        enter our download URL <code>https://dmibo.myskillscloud.com/download</code> (or scan the QR code above), 
+                        enter our download URL <code>https://dm.lumineasy.com/download</code> (or scan the QR code above), 
                         and select Install. Ensure "Install Unknown Apps" is turned ON in your Fire TV Developer Options.
                     </div>
                 </div>

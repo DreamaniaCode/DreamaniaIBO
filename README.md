@@ -29,7 +29,7 @@ Built with clean PHP 8.2+, supporting both **PostgreSQL** (via `DATABASE_URL`) a
   - Customizable admin master password.
   - In-app notification title & message (displayed directly on TV screens).
   - Configurable trial days and default subscription duration.
-  - Direct APK download endpoint at `https://dmibo.myskillscloud.com/download`.
+  - Direct APK download endpoint at `https://dm.lumineasy.com/download`.
 - **🔒 API Protocol & App Security**:
   - Secure reverse-compatible payload obfuscation (`CryptoHelper`).
   - Supports `/authenticate`, `/playlists`, `/delete`, `/parent-control/update`, and `player_api.php`.
@@ -91,5 +91,6 @@ Open [http://localhost/](http://localhost/) in your browser.
 
 ## 🔐 Credentials & Attribution
 - **Default Master Password**: `200600` (can be updated in the Settings tab).
-- **Official Download URL**: `https://dmibo.myskillscloud.com/download`
+- **Official Download URL**: `https://dm.lumineasy.com/download`
+- **Official Web Portal**: `https://dm.lumineasy.com`
 - **Powered by**: [DreamaniaCode](https://www.facebook.com/dreamaniacode)

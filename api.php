@@ -266,7 +266,7 @@ function handleAuthenticate(): void {
         'qr_url'         => $settings['qr_url'] ?: "{$baseUrl}/qr.php?text=",
         'subtitle_url'   => $settings['subtitle_url'] ?: $baseUrl,
         'app_version'    => $settings['app_version'] ?? '1.0.0',
-        'apk_link'       => !empty($settings['apk_link']) ? $settings['apk_link'] : "https://dmibo.myskillscloud.com/download",
+        'apk_link'       => !empty($settings['apk_link']) ? $settings['apk_link'] : "https://dm.lumineasy.com/download",
         'portals'        => $portals,
         'urls'           => $urls,
     ];

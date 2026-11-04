@@ -1288,7 +1288,7 @@ input:focus, select:focus, textarea:focus {
 
                         <div class="form-group">
                             <label for="apk_link">APK Download URL</label>
-                            <input type="url" id="apk_link" name="apk_link" value="<?= htmlspecialchars($settings['apk_link'] ?? 'https://dmibo.myskillscloud.com/download') ?>">
+                            <input type="url" id="apk_link" name="apk_link" value="<?= htmlspecialchars($settings['apk_link'] ?? 'https://dm.lumineasy.com/download') ?>">
                         </div>
 
                         <button type="submit" class="btn" style="width:100%;">Save Global Settings</button>

@@ -189,7 +189,7 @@ class DB {
             'qr_url'           => '',
             'subtitle_url'     => '',
             'app_version'      => '1.0.0',
-            'apk_link'         => 'https://dmibo.myskillscloud.com/download'
+            'apk_link'         => 'https://dm.lumineasy.com/download'
         ];
 
         foreach ($defaults as $k => $v) {
