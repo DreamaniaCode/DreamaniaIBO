@@ -23,8 +23,9 @@ if (empty($_SESSION['csrf_token'])) {
 $csrf = $_SESSION['csrf_token'];
 
 $settings = DB::getAllSettings();
-$price1Y = $settings['price_client_1y'] ?? '50';
-$priceLife = $settings['price_client_life'] ?? '150';
+$pricing = DB::getPricing();
+$price1Y = (string)$pricing['client_1y_dh'];
+$priceLife = (string)$pricing['client_life_dh'];
 $ribBank = $settings['rib_bank_name'] ?? 'CIH BANK';
 $ribAccount = $settings['rib_account_name'] ?? 'DREAMANIA MEDIA';
 $ribNumber = $settings['rib_number'] ?? '230 780 4567890123456789 12';
@@ -706,9 +707,153 @@ if ($isClientLogged) {
             color: var(--text-secondary);
             margin-top: auto;
         }
+    
+        /* Ambient Living Mesh Orbs */
+        .ambient-mesh {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .mesh-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.35;
+            animation: floatMesh 24s infinite ease-in-out alternate;
+        }
+        .orb-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.45) 0%, transparent 70%);
+            top: -150px; left: -100px;
+            animation-duration: 22s;
+        }
+        .orb-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(6, 182, 212, 0.35) 0%, transparent 70%);
+            top: 40%; right: -120px;
+            animation-duration: 18s;
+            animation-delay: -6s;
+        }
+        .orb-3 {
+            width: 550px; height: 550px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, transparent 70%);
+            bottom: -150px; left: 20%;
+            animation-duration: 26s;
+            animation-delay: -12s;
+        }
+        @keyframes floatMesh {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(60px, 80px) scale(1.08) rotate(180deg); }
+            100% { transform: translate(-40px, 40px) scale(0.96) rotate(360deg); }
+        }
+
+        /* Glassmorphism Overhaul */
+        .card, .plan-card, .device-card {
+            background: rgba(18, 14, 34, 0.65) !important;
+            backdrop-filter: blur(28px) saturate(190%) !important;
+            -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15), 0 20px 45px -15px rgba(0, 0, 0, 0.75) !important;
+            border-radius: 18px !important;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease !important;
+            transform-style: preserve-3d;
+        }
+        .card:hover, .plan-card:hover {
+            border-color: rgba(139, 92, 246, 0.45) !important;
+            transform: translateY(-4px) !important;
+        }
+        .portal-header {
+            background: rgba(12, 10, 22, 0.8) !important;
+            backdrop-filter: blur(24px) saturate(190%) !important;
+            -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        .main-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Responsive Mobile Breakpoints */
+        @media (max-width: 860px) {
+            .header-content {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            .grid-2 {
+                grid-template-columns: 1fr !important;
+            }
+            .plan-cards {
+                grid-template-columns: 1fr !important;
+            }
+        }
+        @media (max-width: 600px) {
+            .main-wrapper {
+                padding: 0 14px !important;
+                margin: 18px auto !important;
+            }
+            .card {
+                padding: 18px !important;
+            }
+            .device-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 12px;
+            }
+            .header-nav {
+                width: 100%;
+                justify-content: space-between;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .header-nav .btn {
+                flex: 1;
+                font-size: 11px;
+                padding: 8px 10px;
+                white-space: nowrap;
+            }
+            /* Responsive table cards on mobile */
+            table, tbody, tr, td {
+                display: block;
+                width: 100%;
+            }
+            thead { display: none; }
+            tr {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 14px;
+                padding: 14px;
+                margin-bottom: 12px;
+            }
+            td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+                border: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            }
+            td:last-child { border-bottom: none; }
+            td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                font-size: 11px;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Ambient Living Mesh Orbs -->
+    <div class="ambient-mesh">
+        <div class="mesh-orb orb-1"></div>
+        <div class="mesh-orb orb-2"></div>
+        <div class="mesh-orb orb-3"></div>
+    </div>
 
     <!-- Header Navigation -->
     <header class="portal-header">
@@ -797,12 +942,12 @@ if ($isClientLogged) {
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px;">
                     <div style="background: rgba(139, 92, 246, 0.08); border: 1px solid var(--border-highlight); border-radius: var(--radius); padding: 16px; text-align: center;">
                         <span style="font-size: 12px; font-weight: 700; color: var(--primary); text-transform: uppercase;">Abonnement 1 An</span>
-                        <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 4px 0;"><?= htmlspecialchars($price1Y) ?> DH</div>
+                        <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 4px 0;"><?= $pricing['client_1y_intl'] ?> <span style="font-size: 14px; color: var(--primary);">(<?= htmlspecialchars($price1Y) ?> DH)</span></div>
                         <span style="font-size: 11px; color: var(--text-secondary);">Renouvellement 12 mois</span>
                     </div>
                     <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: var(--radius); padding: 16px; text-align: center;">
                         <span style="font-size: 12px; font-weight: 700; color: var(--accent-gold); text-transform: uppercase;">Licence À Vie</span>
-                        <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 4px 0;"><?= htmlspecialchars($priceLife) ?> DH</div>
+                        <div style="font-size: 24px; font-weight: 800; color: #fff; margin: 4px 0;"><?= $pricing['client_life_intl'] ?> <span style="font-size: 14px; color: var(--accent-gold);">(<?= htmlspecialchars($priceLife) ?> DH)</span></div>
                         <span style="font-size: 11px; color: var(--text-secondary);">Paiement unique Lifetime</span>
                     </div>
                 </div>
@@ -1059,7 +1204,7 @@ if ($isClientLogged) {
                             <input type="radio" name="plan" value="sub_1y" checked>
                             <div class="plan-header">
                                 <div class="plan-title">Abonnement 1 An</div>
-                                <div class="plan-price">€5.00 / $5.00 <span style="font-size: 13px; color: var(--text-secondary);">(<?= htmlspecialchars($price1Y) ?> DH)</span></div>
+                                <div class="plan-price"><?= $pricing['client_1y_intl'] ?> <span style="font-size: 13px; color: var(--text-secondary);">(<?= htmlspecialchars($price1Y) ?> DH)</span></div>
                             </div>
                             <ul style="list-style: none; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
                                 <li>✔️ Accès complet pendant 12 mois</li>
@@ -1073,7 +1218,7 @@ if ($isClientLogged) {
                             <input type="radio" name="plan" value="sub_lifetime">
                             <div class="plan-header">
                                 <div class="plan-title">Licence Lifetime (À Vie)</div>
-                                <div class="plan-price" style="color: var(--accent-gold);">€15.00 / $15.00 <span style="font-size: 13px; color: var(--text-secondary);">(<?= htmlspecialchars($priceLife) ?> DH)</span></div>
+                                <div class="plan-price" style="color: var(--accent-gold);"><?= $pricing['client_life_intl'] ?> <span style="font-size: 13px; color: var(--text-secondary);">(<?= htmlspecialchars($priceLife) ?> DH)</span></div>
                             </div>
                             <ul style="list-style: none; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
                                 <li>⭐ <strong>Paiement unique, plus jamais de frais</strong></li>
@@ -1337,5 +1482,26 @@ if ($isClientLogged) {
             });
         }
     </script>
+<script>
+// 3D Card Interactive Tilt Micro-Engine
+document.addEventListener('DOMContentLoaded', () => {
+    const tiltElements = document.querySelectorAll('.card, .plan-card, .device-card');
+    tiltElements.forEach(card => {
+        card.addEventListener('mousemove', e => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+            card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-4px)`;
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
+        });
+    });
+});
+</script>
 </body>
 </html>

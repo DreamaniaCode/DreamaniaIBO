@@ -221,7 +221,7 @@ class DB {
             'whatsapp_number'      => '+212600000000',
             'price_client_1y'      => '50',
             'price_client_life'    => '150',
-            'price_reseller_10'    => '100',
+            'price_reseller_10'    => '150',
             'price_reseller_20'    => '180',
             'price_reseller_30'    => '240',
             'price_reseller_50'    => '350',
@@ -235,6 +235,13 @@ class DB {
                 $ins = $pdo->prepare("INSERT INTO settings (key, value) VALUES (?, ?)");
                 $ins->execute([$k, $v]);
             }
+        }
+
+        // Migrate price_reseller_10 from old 100 to 150 if untouched
+        $stmt10 = $pdo->prepare("SELECT value FROM settings WHERE key = 'price_reseller_10'");
+        $stmt10->execute();
+        if ($stmt10->fetchColumn() === '100') {
+            $pdo->exec("UPDATE settings SET value = '150' WHERE key = 'price_reseller_10'");
         }
 
         // Default DNS
@@ -313,6 +320,96 @@ class DB {
             $settings[$r['key']] = $r['value'];
         }
         return $settings;
+    }
+
+    /**
+     * Centralized dynamic pricing helper across the entire platform.
+     * When any price is changed in settings, all public pages, checkout modals,
+     * and reseller portals instantly update automatically.
+     */
+    public static function getPricing(): array {
+        $settings = self::getAllSettings();
+        
+        $c1y = (float)($settings['price_client_1y'] ?? 50);
+        $clife = (float)($settings['price_client_life'] ?? 150);
+
+        $p10 = (float)($settings['price_reseller_10'] ?? 150);
+        $p20 = (float)($settings['price_reseller_20'] ?? 180);
+        $p30 = (float)($settings['price_reseller_30'] ?? 240);
+        $p50 = (float)($settings['price_reseller_50'] ?? 350);
+        $p100 = (float)($settings['price_reseller_100'] ?? 600);
+
+        return [
+            'client_1y_dh'        => $c1y,
+            'client_1y_eur'       => round($c1y / 10, 2),
+            'client_1y_usd'       => round($c1y / 10, 2),
+            'client_1y_intl'      => '€' . number_format($c1y / 10, 2) . ' / $' . number_format($c1y / 10, 2),
+            'client_1y_label'     => '€' . number_format($c1y / 10, 2) . ' / $' . number_format($c1y / 10, 2) . ' (' . (int)$c1y . ' DH)',
+            
+            'client_life_dh'      => $clife,
+            'client_life_eur'     => round($clife / 10, 2),
+            'client_life_usd'     => round($clife / 10, 2),
+            'client_life_intl'    => '€' . number_format($clife / 10, 2) . ' / $' . number_format($clife / 10, 2),
+            'client_life_label'   => '€' . number_format($clife / 10, 2) . ' / $' . number_format($clife / 10, 2) . ' (' . (int)$clife . ' DH)',
+
+            'reseller_packs'      => [
+                10  => [
+                    'credits'    => 10,
+                    'dh'         => $p10,
+                    'eur'        => round($p10 / 10, 2),
+                    'usd'        => round($p10 / 10, 2),
+                    'rate_dh'    => round($p10 / 10, 2),
+                    'rate_eur'   => round(($p10 / 10) / 10, 2),
+                    'rate_label' => round(($p10 / 10) / 10, 2) . '€ (' . round($p10 / 10, 1) . ' DH) / cr',
+                    'badge'      => 'Pack Découverte',
+                    'label'      => '€' . round($p10 / 10, 2) . ' / $' . round($p10 / 10, 2) . ' (' . (int)$p10 . ' DH)'
+                ],
+                20  => [
+                    'credits'    => 20,
+                    'dh'         => $p20,
+                    'eur'        => round($p20 / 10, 2),
+                    'usd'        => round($p20 / 10, 2),
+                    'rate_dh'    => round($p20 / 20, 2),
+                    'rate_eur'   => round(($p20 / 20) / 10, 2),
+                    'rate_label' => round(($p20 / 20) / 10, 2) . '€ (' . round($p20 / 20, 1) . ' DH) / cr',
+                    'badge'      => 'Pack Standard',
+                    'label'      => '€' . round($p20 / 10, 2) . ' / $' . round($p20 / 10, 2) . ' (' . (int)$p20 . ' DH)'
+                ],
+                30  => [
+                    'credits'    => 30,
+                    'dh'         => $p30,
+                    'eur'        => round($p30 / 10, 2),
+                    'usd'        => round($p30 / 10, 2),
+                    'rate_dh'    => round($p30 / 30, 2),
+                    'rate_eur'   => round(($p30 / 30) / 10, 2),
+                    'rate_label' => round(($p30 / 30) / 10, 2) . '€ (' . round($p30 / 30, 1) . ' DH) / cr',
+                    'badge'      => 'Pack Pro',
+                    'label'      => '€' . round($p30 / 10, 2) . ' / $' . round($p30 / 10, 2) . ' (' . (int)$p30 . ' DH)'
+                ],
+                50  => [
+                    'credits'    => 50,
+                    'dh'         => $p50,
+                    'eur'        => round($p50 / 10, 2),
+                    'usd'        => round($p50 / 10, 2),
+                    'rate_dh'    => round($p50 / 50, 2),
+                    'rate_eur'   => round(($p50 / 50) / 10, 2),
+                    'rate_label' => round(($p50 / 50) / 10, 2) . '€ (' . round($p50 / 50, 1) . ' DH) / cr',
+                    'badge'      => '🔥 Top Vente',
+                    'label'      => '€' . round($p50 / 10, 2) . ' / $' . round($p50 / 10, 2) . ' (' . (int)$p50 . ' DH)'
+                ],
+                100 => [
+                    'credits'    => 100,
+                    'dh'         => $p100,
+                    'eur'        => round($p100 / 10, 2),
+                    'usd'        => round($p100 / 10, 2),
+                    'rate_dh'    => round($p100 / 100, 2),
+                    'rate_eur'   => round(($p100 / 100) / 10, 2),
+                    'rate_label' => round(($p100 / 100) / 10, 2) . '€ (' . round($p100 / 100, 1) . ' DH) / cr (-40%)',
+                    'badge'      => '👑 Grossiste VIP (-40%)',
+                    'label'      => '€' . round($p100 / 10, 2) . ' / $' . round($p100 / 10, 2) . ' (' . (int)$p100 . ' DH)'
+                ]
+            ]
+        ];
     }
 
     public static function normalizeMac(string $mac): string {

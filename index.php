@@ -374,6 +374,7 @@ $dnsList = ($isLogged && $role === 'admin') ? DB::getAllDns() : [];
 $resellersList = ($isLogged && $role === 'admin') ? DB::getAllResellers() : [];
 $recentLines = ($isLogged && $role === 'admin') ? DB::getRecentLineActivity(30) : [];
 $settings = $isLogged ? DB::getAllSettings() : [];
+$pricing = DB::getPricing();
 $ordersList = ($isLogged && $role === 'admin') ? DB::getAllOrders() : [];
 $pendingOrdersCount = 0;
 if ($role === 'admin') {
@@ -399,14 +400,26 @@ $apkFileExists = file_exists($apkPath) && filesize($apkPath) > 100000;
 <html lang="en" data-theme="<?= htmlspecialchars($currentTheme) ?>">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
 <title>Dreamania Player - Middleware &amp; Reseller Portal</title>
 <link rel="icon" type="image/png" href="assets/img/icon.png">
+
+<!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/css/themes.css">
+
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+    overflow-x: hidden;
+    width: 100%;
+}
+
 body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     background-color: var(--bg);
     background-image: var(--bg-mesh);
     background-attachment: fixed;
@@ -415,20 +428,65 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    position: relative;
+}
+
+/* Ambient Living Mesh Orbs */
+.ambient-mesh {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw; height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+.mesh-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.38;
+    animation: floatMesh 24s infinite ease-in-out alternate;
+}
+.orb-1 {
+    width: 600px; height: 600px;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.45) 0%, transparent 70%);
+    top: -150px; left: -100px;
+    animation-duration: 22s;
+}
+.orb-2 {
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(6, 182, 212, 0.4) 0%, transparent 70%);
+    top: 40%; right: -120px;
+    animation-duration: 18s;
+    animation-delay: -6s;
+}
+.orb-3 {
+    width: 550px; height: 550px;
+    background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, transparent 70%);
+    bottom: -150px; left: 20%;
+    animation-duration: 26s;
+    animation-delay: -12s;
+}
+@keyframes floatMesh {
+    0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+    50% { transform: translate(60px, 80px) scale(1.08) rotate(180deg); }
+    100% { transform: translate(-40px, 40px) scale(0.96) rotate(360deg); }
 }
 
 /* Navbar */
 .navbar {
-    background: rgba(12, 10, 22, 0.92);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--border);
-    padding: 12px 24px;
+    background: rgba(12, 10, 22, 0.75);
+    backdrop-filter: blur(24px) saturate(190%);
+    -webkit-backdrop-filter: blur(24px) saturate(190%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+    padding: 14px 24px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     position: sticky;
     top: 0;
-    z-index: 50;
+    z-index: 100;
 }
 .brand {
     display: flex;
@@ -438,9 +496,10 @@ body {
     color: inherit;
 }
 .brand-logo-img {
-    width: 40px;
-    height: 40px;
-    filter: drop-shadow(0 4px 10px var(--primary-glow));
+    width: 42px;
+    height: 42px;
+    filter: drop-shadow(0 4px 12px var(--primary-glow));
+    border-radius: 10px;
 }
 .brand-name {
     font-size: 19px;
@@ -451,148 +510,237 @@ body {
     background: var(--badge-bg);
     color: var(--badge-color);
     border: 1px solid var(--badge-border);
-    font-size: 11px;
-    padding: 2px 8px;
+    font-size: 10px;
+    padding: 3px 8px;
     border-radius: 6px;
-    font-weight: 700;
+    font-weight: 800;
+    letter-spacing: 0.5px;
     margin-left: 6px;
 }
 .nav-actions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 .role-badge {
-    background: rgba(139, 92, 246, 0.15);
-    border: 1px solid #8b5cf6;
+    background: rgba(139, 92, 246, 0.18);
+    border: 1px solid rgba(139, 92, 246, 0.45);
     color: #c4b5fd;
-    padding: 4px 10px;
-    border-radius: 6px;
+    padding: 6px 14px;
+    border-radius: 8px;
     font-size: 12px;
-    font-weight: bold;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
-/* Buttons */
+/* Mobile Hamburger Toggle */
+.menu-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    cursor: pointer;
+    padding: 8px;
+}
+.menu-toggle span {
+    display: block;
+    width: 100%;
+    height: 2.5px;
+    background: #fff;
+    border-radius: 2px;
+    transition: all 0.25s ease;
+}
+
+/* Mobile Off-Canvas / Drawer Menu */
+.mobile-nav-drawer {
+    display: none;
+    position: fixed;
+    top: 71px; left: 0; right: 0;
+    background: rgba(12, 10, 22, 0.95);
+    backdrop-filter: blur(28px) saturate(200%);
+    -webkit-backdrop-filter: blur(28px) saturate(200%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.85);
+    padding: 20px;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 99;
+}
+.mobile-nav-drawer.open {
+    display: flex;
+}
+.mobile-nav-drawer .btn {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+}
+
+/* Modern 3D & Glass Buttons */
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-    padding: 8px 16px;
+    gap: 8px;
+    padding: 10px 18px;
     font-size: 13px;
-    font-weight: 600;
-    border-radius: 8px;
+    font-weight: 700;
+    border-radius: 10px;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     text-decoration: none;
     color: #fff;
     background: var(--primary-gradient);
-    box-shadow: 0 4px 14px var(--primary-glow);
+    box-shadow: 0 4px 18px var(--primary-glow);
+    position: relative;
+    overflow: hidden;
 }
 .btn:hover {
     background: var(--primary-gradient-hover);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px var(--primary-glow);
+}
+.btn:active {
+    transform: translateY(0);
 }
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.06);
-    box-shadow: none;
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
     color: var(--text);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255, 255, 255, 0.12);
 }
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: var(--accent);
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
-.btn-success { background: #10b981; box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); }
-.btn-warning { background: #f59e0b; color: #000; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3); }
-.btn-danger { background: #ef4444; box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3); }
-.btn-sm { padding: 5px 10px; font-size: 11px; border-radius: 6px; }
+.btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); }
+.btn-warning { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #000; box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35); }
+.btn-danger { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35); }
+.btn-sm { padding: 6px 12px; font-size: 11px; border-radius: 8px; }
 
-/* Layout */
+/* Layout & Containers */
 .main-container {
     width: 100%;
-    max-width: 1240px;
-    margin: 24px auto;
-    padding: 0 16px;
+    max-width: 1280px;
+    margin: 28px auto;
+    padding: 0 20px;
     flex: 1;
+    position: relative;
+    z-index: 1;
 }
 
-/* Stats */
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
+/* Glassmorphism Cards & 3D Tilt Elements */
+.card, .stat-card {
+    background: rgba(18, 14, 34, 0.65);
+    backdrop-filter: blur(28px) saturate(190%);
+    -webkit-backdrop-filter: blur(28px) saturate(190%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15), 0 20px 45px -15px rgba(0, 0, 0, 0.75);
+    border-radius: 20px;
+    padding: 24px;
     margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+    transform-style: preserve-3d;
 }
-.stat-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 20px;
+.card h2 {
+    font-size: 19px;
+    font-weight: 800;
+    margin-bottom: 20px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    justify-content: space-between;
+    letter-spacing: -0.3px;
+}
+.card-3d:hover, .stat-card:hover {
+    border-color: rgba(139, 92, 246, 0.45);
+    box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25), 0 25px 50px -12px rgba(139, 92, 246, 0.25);
+}
+
+/* Stats Grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-bottom: 28px;
+}
+.stat-card {
+    padding: 22px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 0;
 }
 .stat-icon {
-    font-size: 28px;
-    width: 52px;
-    height: 52px;
-    border-radius: 12px;
-    background: rgba(255, 255, 255, 0.05);
+    font-size: 26px;
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2);
 }
-.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 700; }
-.stat-value { font-size: 22px; font-weight: 800; color: var(--text); }
+.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; font-weight: 800; letter-spacing: 0.5px; }
+.stat-value { font-size: 26px; font-weight: 800; color: var(--text); margin-top: 2px; }
 
 /* Navigation Tabs */
 .tabs-nav {
     display: flex;
     gap: 8px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 26px;
     overflow-x: auto;
-    padding-bottom: 8px;
+    padding-bottom: 10px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+.tabs-nav::-webkit-scrollbar {
+    height: 4px;
+}
+.tabs-nav::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.3);
+    border-radius: 4px;
 }
 .tab-link {
     padding: 10px 18px;
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 13.5px;
+    font-weight: 700;
     color: var(--muted);
     text-decoration: none;
-    border-radius: 8px;
-    transition: all 0.2s;
+    border-radius: 12px;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     white-space: nowrap;
+    border: 1px solid transparent;
 }
-.tab-link:hover, .tab-link.active {
+.tab-link:hover {
     color: #fff;
     background: rgba(255, 255, 255, 0.08);
 }
 .tab-link.active {
     background: var(--primary-gradient);
     color: #fff;
+    box-shadow: 0 4px 18px var(--primary-glow);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Card & Table */
-.card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 24px;
-    margin-bottom: 24px;
-}
-.card h2 {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
+/* Tables & Wrappers */
 .table-wrapper {
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 12px;
 }
 table {
     width: 100%;
@@ -601,84 +749,91 @@ table {
 }
 th {
     text-align: left;
-    padding: 12px 14px;
+    padding: 14px 16px;
     color: var(--muted);
-    font-weight: 700;
-    border-bottom: 1px solid var(--border);
+    font-weight: 800;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     font-size: 11px;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    background: rgba(0, 0, 0, 0.2);
 }
 td {
-    padding: 14px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    padding: 15px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     vertical-align: middle;
 }
 tr:hover td {
-    background: rgba(255, 255, 255, 0.02);
+    background: rgba(255, 255, 255, 0.03);
 }
 
 /* Badges */
 .mac-badge {
-    font-family: monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
-    padding: 4px 8px;
-    background: rgba(139, 92, 246, 0.15);
-    border: 1px solid rgba(139, 92, 246, 0.4);
-    border-radius: 6px;
+    padding: 5px 10px;
+    background: rgba(139, 92, 246, 0.18);
+    border: 1px solid rgba(139, 92, 246, 0.45);
+    border-radius: 8px;
     color: #c4b5fd;
-    font-weight: bold;
+    font-weight: 700;
 }
 .key-badge {
-    font-family: monospace;
+    font-family: 'JetBrains Mono', monospace;
     font-size: 12px;
-    padding: 4px 8px;
-    background: rgba(245, 158, 11, 0.15);
-    border: 1px solid rgba(245, 158, 11, 0.4);
-    border-radius: 6px;
+    padding: 5px 10px;
+    background: rgba(245, 158, 11, 0.18);
+    border: 1px solid rgba(245, 158, 11, 0.45);
+    border-radius: 8px;
     color: #fcd34d;
-    font-weight: bold;
+    font-weight: 700;
 }
 .status-pill {
     font-size: 11px;
-    padding: 3px 8px;
-    border-radius: 12px;
-    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 800;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-block;
 }
-.status-active { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-.status-trial { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-.status-expired { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-.status-blocked { background: rgba(100, 116, 139, 0.2); color: #94a3b8; }
+.status-active { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+.status-trial { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+.status-expired { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+.status-blocked { background: rgba(100, 116, 139, 0.2); color: #94a3b8; border: 1px solid rgba(100, 116, 139, 0.4); }
 
-/* Forms */
+/* Form Controls */
 .form-group {
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 }
 label {
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     color: var(--muted);
 }
 input, select, textarea {
     width: 100%;
-    padding: 10px 14px;
-    background: rgba(0, 0, 0, 0.25);
-    border: 1px solid var(--border);
-    border-radius: 8px;
+    min-height: 46px;
+    padding: 12px 16px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
     color: var(--text);
-    font-size: 14px;
+    font-size: 14.5px;
     outline: none;
-    transition: border-color 0.2s;
+    transition: all 0.2s ease;
 }
 input:focus, select:focus, textarea:focus {
     border-color: var(--accent);
+    background: rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
 }
 .grid-2 {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 20px;
+    gap: 24px;
 }
 
 /* Modals */
@@ -686,9 +841,10 @@ input:focus, select:focus, textarea:focus {
     display: none;
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(8px);
-    z-index: 100;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    z-index: 200;
     align-items: center;
     justify-content: center;
     padding: 16px;
@@ -697,25 +853,38 @@ input:focus, select:focus, textarea:focus {
     display: flex;
 }
 .modal-content {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
+    background: rgba(18, 14, 34, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 20px;
     width: 100%;
     max-width: 520px;
-    padding: 24px;
+    padding: 28px;
     position: relative;
     max-height: 90vh;
     overflow-y: auto;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.85);
 }
 .modal-close {
     position: absolute;
-    top: 16px;
-    right: 16px;
-    background: none;
-    border: none;
+    top: 18px;
+    right: 18px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     color: var(--muted);
-    font-size: 20px;
+    font-size: 16px;
     cursor: pointer;
+    transition: all 0.2s;
+}
+.modal-close:hover {
+    color: #fff;
+    background: rgba(239, 68, 68, 0.25);
+    border-color: #ef4444;
 }
 
 /* Footer */
@@ -724,12 +893,59 @@ input:focus, select:focus, textarea:focus {
     padding: 24px;
     color: var(--muted);
     font-size: 13px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
     margin-top: auto;
+    position: relative;
+    z-index: 2;
+}
+
+/* Responsive Rules */
+@media (max-width: 900px) {
+    .menu-toggle { display: flex; }
+    .nav-actions { display: none; }
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 14px;
+    }
+}
+
+@media (max-width: 640px) {
+    .navbar {
+        padding: 12px 16px;
+    }
+    .brand-name {
+        font-size: 17px;
+    }
+    .main-container {
+        padding: 0 14px;
+        margin: 18px auto;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+    .card {
+        padding: 18px;
+        border-radius: 16px;
+    }
+    .modal-content {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        max-width: 100%;
+        max-height: 85vh;
+        border-radius: 22px 22px 0 0;
+        margin-top: auto;
+    }
 }
 </style>
 </head>
 <body>
+
+<!-- Ambient Living Mesh Orbs -->
+<div class="ambient-mesh">
+    <div class="mesh-orb orb-1"></div>
+    <div class="mesh-orb orb-2"></div>
+    <div class="mesh-orb orb-3"></div>
+</div>
 
 <!-- Navbar -->
 <header class="navbar">
@@ -741,6 +957,7 @@ input:focus, select:focus, textarea:focus {
         </div>
     </a>
 
+    <!-- Desktop Navigation Actions -->
     <div class="nav-actions">
         <a href="device.php" class="btn btn-secondary btn-sm" target="_blank" title="End-User Device &amp; Playlists Portal">📺 Device Portal</a>
         <a href="credits.php" class="btn btn-secondary btn-sm" target="_blank" title="Reseller Credits Portal">⚡ Reseller Credits</a>
@@ -760,7 +977,37 @@ input:focus, select:focus, textarea:focus {
             </form>
         <?php endif; ?>
     </div>
+
+    <!-- Mobile Hamburger Button -->
+    <button class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation" onclick="toggleMobileMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
 </header>
+
+<!-- Mobile Navigation Drawer -->
+<div class="mobile-nav-drawer" id="mobileNavDrawer">
+    <?php if ($isLogged): ?>
+        <div class="role-badge" style="justify-content: center; width: 100%;">
+            <?= ($role === 'admin') ? '👑 Admin: Super Administrator' : '👤 Reseller: ' . htmlspecialchars($_SESSION['user_name'] ?? '') . ' (' . (int)($_SESSION['reseller_credits'] ?? 0) . ' Cr)' ?>
+        </div>
+    <?php endif; ?>
+    <a href="device.php" class="btn btn-secondary" target="_blank">📺 End-User Device Portal</a>
+    <a href="credits.php" class="btn btn-secondary" target="_blank">⚡ Reseller Credits Portal</a>
+    <a href="landing.php" class="btn btn-secondary">🌐 Public Landing Page</a>
+    <?php if ($apkFileExists): ?>
+        <a href="download" class="btn btn-secondary">📲 Download Android APK</a>
+    <?php endif; ?>
+    <?php if ($isLogged): ?>
+        <form method="post" style="width: 100%;">
+            <input type="hidden" name="action" value="logout">
+            <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+            <button type="submit" class="btn btn-danger" style="width: 100%;">Logout</button>
+        </form>
+    <?php endif; ?>
+</div>
+
 
 <main class="main-container">
     <?php if (!empty($msg)): ?>
@@ -802,14 +1049,14 @@ input:focus, select:focus, textarea:focus {
     <?php else: ?>
         <!-- Stats Bar -->
         <div class="stats-grid">
-            <div class="stat-card">
+            <div class="stat-card card-3d">
                 <div class="stat-icon">📺</div>
                 <div>
                     <div class="stat-label">Total Devices</div>
                     <div class="stat-value"><?= count($devices) ?></div>
                 </div>
             </div>
-            <div class="stat-card">
+            <div class="stat-card card-3d">
                 <div class="stat-icon">📑</div>
                 <div>
                     <div class="stat-label">Active Playlists</div>
@@ -817,14 +1064,14 @@ input:focus, select:focus, textarea:focus {
                 </div>
             </div>
             <?php if ($role === 'admin'): ?>
-                <div class="stat-card">
+                <div class="stat-card card-3d">
                     <div class="stat-icon">👥</div>
                     <div>
                         <div class="stat-label">Total Resellers</div>
                         <div class="stat-value"><?= count($resellersList) ?></div>
                     </div>
                 </div>
-                <div class="stat-card">
+                <div class="stat-card card-3d">
                     <div class="stat-icon">🌐</div>
                     <div>
                         <div class="stat-label">DNS Portals</div>
@@ -832,7 +1079,7 @@ input:focus, select:focus, textarea:focus {
                     </div>
                 </div>
             <?php else: ?>
-                <div class="stat-card">
+                <div class="stat-card card-3d">
                     <div class="stat-icon">💎</div>
                     <div>
                         <div class="stat-label">My Credits</div>
@@ -1534,8 +1781,8 @@ input:focus, select:focus, textarea:focus {
                         <h4 style="color:#fbbf24; margin:16px 0 6px;">Reseller Wholesale Credit Packs (1 Credit = 1 Year)</h4>
                         <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                             <div class="form-group">
-                                <label for="price_reseller_10">10 Credits Pack (DH)</label>
-                                <input type="number" id="price_reseller_10" name="price_reseller_10" value="<?= htmlspecialchars($settings['price_reseller_10'] ?? '100') ?>" required>
+                                <label for="price_reseller_10">10 Credits Pack (DH) <span style="color:#fbbf24; font-size:11px;">(Default: 150 DH / €15)</span></label>
+                                <input type="number" id="price_reseller_10" name="price_reseller_10" value="<?= htmlspecialchars($settings['price_reseller_10'] ?? '150') ?>" required>
                             </div>
                             <div class="form-group">
                                 <label for="price_reseller_20">20 Credits Pack (DH)</label>
@@ -1553,6 +1800,33 @@ input:focus, select:focus, textarea:focus {
                         <div class="form-group">
                             <label for="price_reseller_100">100 Credits Pack (DH)</label>
                             <input type="number" id="price_reseller_100" name="price_reseller_100" value="<?= htmlspecialchars($settings['price_reseller_100'] ?? '600') ?>" required>
+                        </div>
+                    </div>
+
+                    <!-- Live Pricing Engine Preview -->
+                    <div class="card" style="margin-top: 18px; background: rgba(18, 14, 34, 0.7); border: 1px solid rgba(139, 92, 246, 0.3);">
+                        <h2 style="font-size: 16px; color: var(--accent); margin-bottom: 10px;">
+                            🔄 Live Dynamic Pricing Engine Active Everywhere
+                        </h2>
+                        <p style="color: var(--muted); font-size: 12.5px; margin-bottom: 14px;">
+                            Any price modified above updates across the public Landing page, End-user Device portal, and Reseller Credits wholesale portal automatically.
+                        </p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; font-size: 12.5px;">
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+                                <span style="color: var(--muted);">1 Year Client:</span><br>
+                                <strong style="color: #fff; font-size: 14px;"><?= $pricing['client_1y_label'] ?></strong>
+                            </div>
+                            <div style="background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+                                <span style="color: var(--muted);">Lifetime VIP:</span><br>
+                                <strong style="color: #fbbf24; font-size: 14px;"><?= $pricing['client_life_label'] ?></strong>
+                            </div>
+                            <?php foreach ($pricing['reseller_packs'] as $pCredits => $pack): ?>
+                                <div style="background: rgba(0,0,0,0.3); padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+                                    <span style="color: var(--muted);"><?= $pCredits ?> Credits Pack:</span><br>
+                                    <strong style="color: #fff; font-size: 14px;"><?= $pack['label'] ?></strong><br>
+                                    <span style="color: #34d399; font-size: 11px; font-weight: 700;"><?= $pack['rate_label'] ?></span>
+                                </div>
+                            <?php endforeach; ?>
                         </div>
                     </div>
 
@@ -1610,5 +1884,35 @@ function closeEditModal() {
 }
 </script>
 
+<script>
+function toggleMobileMenu() {
+    const drawer = document.getElementById('mobileNavDrawer');
+    if (drawer) {
+        drawer.classList.toggle('open');
+    }
+}
+
+// 3D Card Interactive Tilt Micro-Engine
+document.addEventListener('DOMContentLoaded', () => {
+    const tiltElements = document.querySelectorAll('.card-3d, .stat-card');
+    tiltElements.forEach(card => {
+        card.addEventListener('mousemove', e => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+            card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-4px)`;
+            card.style.setProperty('--mouse-x', `${x}px`);
+            card.style.setProperty('--mouse-y', `${y}px`);
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
+        });
+    });
+});
+</script>
 </body>
 </html>

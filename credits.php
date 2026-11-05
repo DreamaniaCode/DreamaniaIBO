@@ -28,13 +28,11 @@ if (empty($_SESSION['csrf_token'])) {
 $csrf = $_SESSION['csrf_token'];
 
 $settings = DB::getAllSettings();
-$pricePacks = [
-    10  => (float)($settings['price_reseller_10'] ?? 100),
-    20  => (float)($settings['price_reseller_20'] ?? 180),
-    30  => (float)($settings['price_reseller_30'] ?? 240),
-    50  => (float)($settings['price_reseller_50'] ?? 350),
-    100 => (float)($settings['price_reseller_100'] ?? 600)
-];
+$pricing = DB::getPricing();
+$pricePacks = [];
+foreach ($pricing['reseller_packs'] as $cr => $pInfo) {
+    $pricePacks[$cr] = (float)$pInfo['dh'];
+}
 
 $ribBank = $settings['rib_bank_name'] ?? 'CIH BANK';
 $ribAccount = $settings['rib_account_name'] ?? 'DREAMANIA MEDIA';
@@ -441,9 +439,149 @@ $resellerOrders = ($isResellerLogged && $resellerId > 0) ? DB::getOrdersForResel
             color: var(--text-secondary);
             margin-top: auto;
         }
+    
+        /* Ambient Living Mesh Orbs */
+        .ambient-mesh {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .mesh-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.35;
+            animation: floatMesh 24s infinite ease-in-out alternate;
+        }
+        .orb-1 {
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(139, 92, 246, 0.45) 0%, transparent 70%);
+            top: -150px; left: -100px;
+            animation-duration: 22s;
+        }
+        .orb-2 {
+            width: 500px; height: 500px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.35) 0%, transparent 70%);
+            top: 40%; right: -120px;
+            animation-duration: 18s;
+            animation-delay: -6s;
+        }
+        .orb-3 {
+            width: 550px; height: 550px;
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+            bottom: -150px; left: 20%;
+            animation-duration: 26s;
+            animation-delay: -12s;
+        }
+        @keyframes floatMesh {
+            0% { transform: translate(0, 0) scale(1) rotate(0deg); }
+            50% { transform: translate(60px, 80px) scale(1.08) rotate(180deg); }
+            100% { transform: translate(-40px, 40px) scale(0.96) rotate(360deg); }
+        }
+
+        /* Glassmorphism Overhaul */
+        .card, .pack-card {
+            background: rgba(18, 14, 34, 0.65) !important;
+            backdrop-filter: blur(28px) saturate(190%) !important;
+            -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.12) !important;
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.15), 0 20px 45px -15px rgba(0, 0, 0, 0.75) !important;
+            border-radius: 18px !important;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease !important;
+            transform-style: preserve-3d;
+        }
+        .pack-card:hover {
+            border-color: rgba(245, 158, 11, 0.5) !important;
+            transform: translateY(-6px) scale(1.02) !important;
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25), 0 20px 40px rgba(245, 158, 11, 0.2) !important;
+        }
+        .pack-card.selected {
+            border-color: var(--accent-gold) !important;
+            background: rgba(245, 158, 11, 0.12) !important;
+            box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.25), 0 0 35px rgba(245, 158, 11, 0.3) !important;
+        }
+
+        .portal-header {
+            background: rgba(12, 10, 22, 0.8) !important;
+            backdrop-filter: blur(24px) saturate(190%) !important;
+            -webkit-backdrop-filter: blur(24px) saturate(190%) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        .main-wrapper {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Mobile & Responsive Breakpoints */
+        @media (max-width: 920px) {
+            .pricing-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+            }
+            .header-content {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+        }
+        @media (max-width: 640px) {
+            .pricing-grid {
+                grid-template-columns: 1fr !important;
+            }
+            .main-wrapper {
+                padding: 0 14px !important;
+                margin: 18px auto !important;
+            }
+            .pack-card {
+                padding: 20px 16px !important;
+            }
+            .card {
+                padding: 18px !important;
+            }
+            /* Responsive table cards on mobile */
+            .table-responsive-cards table,
+            .table-responsive-cards tbody,
+            .table-responsive-cards tr,
+            .table-responsive-cards td {
+                display: block;
+                width: 100%;
+            }
+            .table-responsive-cards thead { display: none; }
+            .table-responsive-cards tr {
+                background: rgba(255, 255, 255, 0.03);
+                border: 1px solid rgba(255, 255, 255, 0.08);
+                border-radius: 14px;
+                padding: 14px;
+                margin-bottom: 12px;
+            }
+            .table-responsive-cards td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 0;
+                border: none;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            }
+            .table-responsive-cards td:last-child { border-bottom: none; }
+            .table-responsive-cards td::before {
+                content: attr(data-label);
+                font-weight: 700;
+                font-size: 11px;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+            }
+        }
     </style>
 </head>
 <body>
+
+    <!-- Ambient Living Mesh Orbs -->
+    <div class="ambient-mesh">
+        <div class="mesh-orb orb-1"></div>
+        <div class="mesh-orb orb-2"></div>
+        <div class="mesh-orb orb-3"></div>
+    </div>
 
     <header class="portal-header">
         <div class="header-content">
@@ -513,16 +651,22 @@ $resellerOrders = ($isResellerLogged && $resellerId > 0) ? DB::getOrdersForResel
             </div>
         </div>
 
-        <!-- PRICING TIERS -->
+        <!-- PRICING TIERS (Dynamic from Settings) -->
         <div class="pricing-grid">
-            <!-- 10 Credits -->
-            <div class="pack-card selected" onclick="selectCreditPack(10, this, <?= (float)$pricePacks[10] ?>)">
-                <input type="radio" name="credit_radio" value="10" checked>
-                <div class="pack-credits">10 Crédits</div>
-                <div class="pack-sub">Pack Découverte</div>
-                <div class="pack-price">€10 / $10 <span style="font-size: 12px; color: var(--text-secondary);">(<?= (int)$pricePacks[10] ?> DH)</span></div>
-                <div class="pack-rate">€1.00 (10 DH) / crédit</div>
-            </div>
+            <?php foreach ($pricing['reseller_packs'] as $pCredits => $pack): ?>
+                <?php $isSelected = ($pCredits === 10); ?>
+                <div class="pack-card card-3d <?= $isSelected ? 'selected' : '' ?>" onclick="selectCreditPack(<?= $pCredits ?>, this, <?= (float)$pack['dh'] ?>)">
+                    <?php if (!empty($pack['badge'])): ?>
+                        <span class="pack-badge"><?= htmlspecialchars($pack['badge']) ?></span>
+                    <?php endif; ?>
+                    <input type="radio" name="credit_radio" value="<?= $pCredits ?>" <?= $isSelected ? 'checked' : '' ?>>
+                    <div class="pack-credits"><?= $pCredits ?> Crédits</div>
+                    <div class="pack-sub">Pack <?= $pCredits ?> Licences</div>
+                    <div class="pack-price">€<?= number_format($pack['eur'], 2) ?> / $<?= number_format($pack['usd'], 2) ?> <span style="font-size: 12px; color: var(--text-secondary);">(<?= (int)$pack['dh'] ?> DH)</span></div>
+                    <div class="pack-rate"><?= $pack['rate_label'] ?></div>
+                </div>
+            <?php endforeach; ?>
+        </div>
 
             <!-- 20 Credits -->
             <div class="pack-card" onclick="selectCreditPack(20, this, <?= (float)$pricePacks[20] ?>)">
@@ -855,5 +999,26 @@ $resellerOrders = ($isResellerLogged && $resellerId > 0) ? DB::getOrdersForResel
             window.open(waUrl, '_blank');
         }
     </script>
+<script>
+// 3D Card Interactive Tilt Micro-Engine
+document.addEventListener('DOMContentLoaded', () => {
+    const tiltElements = document.querySelectorAll('.card-3d, .pack-card, .card');
+    tiltElements.forEach(card => {
+        card.addEventListener('mousemove', e => {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            const rotateX = ((y - centerY) / centerY) * -5;
+            const rotateY = ((x - centerX) / centerX) * 5;
+            card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-4px)`;
+        });
+        card.addEventListener('mouseleave', () => {
+            card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) translateY(0)';
+        });
+    });
+});
+</script>
 </body>
 </html>
