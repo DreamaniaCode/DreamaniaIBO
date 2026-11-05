@@ -159,12 +159,29 @@ function handleGitPull(): void {
         echo json_encode(['status' => false, 'message' => 'Unauthorized']);
         exit;
     }
-    $cmd = 'git fetch origin main 2>&1 && git reset --hard origin/main 2>&1';
-    $output = shell_exec($cmd);
+    $cmd = 'export PATH=$PATH:/usr/bin:/usr/local/bin:/bin; git fetch origin main 2>&1 && git reset --hard origin/main 2>&1';
+    $output = @shell_exec($cmd);
+    
+    // Direct GitHub Raw fallback if git is missing on the host
+    $downloaded = [];
+    if (!$output || str_contains($output, 'not found') || str_contains($output, 'fatal')) {
+        $baseUrl = 'https://raw.githubusercontent.com/DreamaniaCode/DreamaniaIBO/main/';
+        $files = ['landing.php', 'landing.html', 'device.php', 'index.php', 'credits.php', 'db.php', 'api.php', 'router.php', '.htaccess'];
+        foreach ($files as $f) {
+            $ctx = stream_context_create(['http' => ['timeout' => 8, 'user_agent' => 'DreamaniaSync/1.0']]);
+            $c = @file_get_contents($baseUrl . $f, false, $ctx);
+            if ($c !== false && strlen($c) > 50) {
+                file_put_contents(__DIR__ . '/' . $f, $c);
+                $downloaded[] = $f;
+            }
+        }
+    }
+
     echo json_encode([
         'status' => true,
-        'message' => 'Git sync executed successfully',
-        'output' => $output
+        'message' => 'Sync executed successfully',
+        'git_output' => $output,
+        'fallback_files' => $downloaded
     ]);
     exit;
 }
