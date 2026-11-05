@@ -931,7 +931,7 @@ $qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dm.l
                     📺 Manage Device / Upload Playlist
                 </a>
                 <a href="#pricing" class="btn btn-secondary btn-lg">
-                    💳 Pricing (50 DH / 150 DH)
+                    💳 Pricing (€5 / $5 - €15 / $15)
                 </a>
             </div>
 
@@ -1256,13 +1256,13 @@ $qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dm.l
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center;">
                             <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">1 Year Plan</span>
-                            <div style="font-size: 26px; font-weight: 800; color: #fff; margin: 4px 0;">50 <span style="font-size: 14px; color: var(--primary);">DH</span></div>
+                            <div style="font-size: 22px; font-weight: 800; color: #fff; margin: 4px 0;">€5.00 / $5.00 <span style="font-size: 13px; color: var(--primary); font-weight: 700;">(50 DH)</span></div>
                             <span style="font-size: 11px; color: #94a3b8;">12 Months Full Access</span>
                         </div>
                         <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 16px; text-align: center; position: relative;">
                             <span style="position: absolute; top: -10px; right: 10px; background: #f59e0b; color: #000; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 8px;">VIP</span>
                             <span style="font-size: 11px; font-weight: 700; color: #fbbf24; text-transform: uppercase;">Lifetime VIP</span>
-                            <div style="font-size: 26px; font-weight: 800; color: #fff; margin: 4px 0;">150 <span style="font-size: 14px; color: #fbbf24;">DH</span></div>
+                            <div style="font-size: 22px; font-weight: 800; color: #fff; margin: 4px 0;">€15.00 / $15.00 <span style="font-size: 13px; color: #fbbf24; font-weight: 700;">(150 DH)</span></div>
                             <span style="font-size: 11px; color: #94a3b8;">Permanent / Never Expires</span>
                         </div>
                     </div>
@@ -1275,7 +1275,7 @@ $qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dm.l
                     </ul>
 
                     <a href="device.php" class="btn btn-gold btn-lg" style="width: 100%;">
-                        📺 Manage Device &amp; Activate (From 50 DH)
+                        📺 Manage Device &amp; Activate (€5 / $5 - 50 DH)
                     </a>
                 </div>
 
@@ -1294,28 +1294,28 @@ $qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dm.l
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 24px;">
                         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
                             <div style="font-size: 14px; font-weight: 800; color: #fff;">10 Credits</div>
-                            <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">100 DH</div>
-                            <span style="font-size: 10px; color: #94a3b8;">10 DH / cr</span>
+                            <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">€10 / $10 <span style="font-size: 11px; color:#fff;">(100 DH)</span></div>
+                            <span style="font-size: 10px; color: #94a3b8;">€1.00 (10 DH) / cr</span>
                         </div>
                         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
                             <div style="font-size: 14px; font-weight: 800; color: #fff;">20 Credits</div>
-                            <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">180 DH</div>
-                            <span style="font-size: 10px; color: #34d399;">9 DH / cr</span>
+                            <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">€18 / $18 <span style="font-size: 11px; color:#fff;">(180 DH)</span></div>
+                            <span style="font-size: 10px; color: #34d399;">€0.90 (9 DH) / cr</span>
                         </div>
                         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
                             <div style="font-size: 14px; font-weight: 800; color: #fff;">30 Credits</div>
-                            <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">240 DH</div>
-                            <span style="font-size: 10px; color: #34d399;">8 DH / cr</span>
+                            <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">€24 / $24 <span style="font-size: 11px; color:#fff;">(240 DH)</span></div>
+                            <span style="font-size: 10px; color: #34d399;">€0.80 (8 DH) / cr</span>
                         </div>
                         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
                             <div style="font-size: 14px; font-weight: 800; color: #fff;">50 Credits</div>
-                            <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">350 DH</div>
-                            <span style="font-size: 10px; color: #34d399;">7 DH / cr</span>
+                            <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">€35 / $35 <span style="font-size: 11px; color:#fff;">(350 DH)</span></div>
+                            <span style="font-size: 10px; color: #34d399;">€0.70 (7 DH) / cr</span>
                         </div>
                         <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 10px; padding: 12px; text-align: center; grid-column: span 2;">
                             <div style="font-size: 14px; font-weight: 800; color: #fff;">100 Credits (Wholesale VIP)</div>
-                            <div style="font-size: 20px; font-weight: 800; color: #34d399; margin: 2px 0;">600 DH</div>
-                            <span style="font-size: 10px; color: #34d399; font-weight: 700;">6 DH / cr (-40% Discount)</span>
+                            <div style="font-size: 17px; font-weight: 800; color: #34d399; margin: 2px 0;">€60 / $60 <span style="font-size: 12px; color:#fff;">(600 DH)</span></div>
+                            <span style="font-size: 10px; color: #34d399; font-weight: 700;">€0.60 (6 DH) / cr (-40% Discount)</span>
                         </div>
                     </div>
 

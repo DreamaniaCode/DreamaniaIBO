@@ -1,3 +1,18 @@
+<?php
+/**
+ * Dreamania Player - Official English Landing Page
+ * Next-Generation IPTV Player for Android TV, Fire TV, and Mobile
+ */
+
+declare(strict_types=1);
+
+$downloadUrl = "download";
+$portalUrl = "index.php?panel=1";
+$appVersion = "1.0.0";
+$appSize = "14.5 MB";
+$minAndroid = "5.0 (Lollipop) to Android 14+";
+$qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dm.lumineasy.com') . "/download");
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -865,7 +880,7 @@
                 <img src="assets/img/icon.png" alt="Dreamania Player" class="brand-logo">
                 <div class="brand-text">
                     DREAMANIA <span>PLAYER</span>
-                    <span class="brand-badge">PRO v1.0.0</span>
+                    <span class="brand-badge">PRO v<?= htmlspecialchars($appVersion) ?></span>
                 </div>
             </a>
 
@@ -884,7 +899,7 @@
                 <a href="credits.php" class="btn btn-secondary btn-sm" title="Reseller Credits Wholesale">
                     ⚡ Reseller
                 </a>
-                <a href="download" class="btn btn-primary btn-sm">
+                <a href="<?= htmlspecialchars($downloadUrl) ?>" class="btn btn-primary btn-sm">
                     ⬇️ Download APK
                 </a>
             </div>
@@ -909,23 +924,23 @@
             </p>
 
             <div class="hero-cta">
-                <a href="download" class="btn btn-primary btn-lg">
+                <a href="<?= htmlspecialchars($downloadUrl) ?>" class="btn btn-primary btn-lg">
                     ⬇️ Download APK
                 </a>
                 <a href="device.php" class="btn btn-gold btn-lg">
                     📺 Manage Device / Upload Playlist
                 </a>
                 <a href="#pricing" class="btn btn-secondary btn-lg">
-                    💳 Pricing (50 DH / 150 DH)
+                    💳 Pricing (€5 / $5 - €15 / $15)
                 </a>
             </div>
 
             <div class="hero-meta">
                 <div class="hero-meta-item">
-                    <span>⚡ Version:</span> <strong>v1.0.0</strong>
+                    <span>⚡ Version:</span> <strong>v<?= htmlspecialchars($appVersion) ?></strong>
                 </div>
                 <div class="hero-meta-item">
-                    <span>📦 Size:</span> <strong>14.5 MB</strong>
+                    <span>📦 Size:</span> <strong><?= htmlspecialchars($appSize) ?></strong>
                 </div>
                 <div class="hero-meta-item">
                     <span>📺 Optimized for:</span> <strong>Fire TV, Google TV, Android TV</strong>
@@ -1241,13 +1256,13 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
                         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-align: center;">
                             <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase;">1 Year Plan</span>
-                            <div style="font-size: 26px; font-weight: 800; color: #fff; margin: 4px 0;">50 <span style="font-size: 14px; color: var(--primary);">DH</span></div>
+                            <div style="font-size: 22px; font-weight: 800; color: #fff; margin: 4px 0;">€5.00 / $5.00 <span style="font-size: 13px; color: var(--primary); font-weight: 700;">(50 DH)</span></div>
                             <span style="font-size: 11px; color: #94a3b8;">12 Months Full Access</span>
                         </div>
                         <div style="background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 16px; text-align: center; position: relative;">
                             <span style="position: absolute; top: -10px; right: 10px; background: #f59e0b; color: #000; font-size: 9px; font-weight: 800; padding: 2px 8px; border-radius: 8px;">VIP</span>
                             <span style="font-size: 11px; font-weight: 700; color: #fbbf24; text-transform: uppercase;">Lifetime VIP</span>
-                            <div style="font-size: 26px; font-weight: 800; color: #fff; margin: 4px 0;">150 <span style="font-size: 14px; color: #fbbf24;">DH</span></div>
+                            <div style="font-size: 22px; font-weight: 800; color: #fff; margin: 4px 0;">€15.00 / $15.00 <span style="font-size: 13px; color: #fbbf24; font-weight: 700;">(150 DH)</span></div>
                             <span style="font-size: 11px; color: #94a3b8;">Permanent / Never Expires</span>
                         </div>
                     </div>
@@ -1260,7 +1275,7 @@
                     </ul>
 
                     <a href="device.php" class="btn btn-gold btn-lg" style="width: 100%;">
-                        📺 Manage Device &amp; Activate (From 50 DH)
+                        📺 Manage Device &amp; Activate (€5 / $5 - 50 DH)
                     </a>
                 </div>
 
@@ -1279,28 +1294,28 @@
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 24px;">
                         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
                             <div style="font-size: 14px; font-weight: 800; color: #fff;">10 Credits</div>
-                            <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">100 DH</div>
-                            <span style="font-size: 10px; color: #94a3b8;">10 DH / cr</span>
+                            <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">€10 / $10 <span style="font-size: 11px; color:#fff;">(100 DH)</span></div>
+                            <span style="font-size: 10px; color: #94a3b8;">€1.00 (10 DH) / cr</span>
                         </div>
                         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
                             <div style="font-size: 14px; font-weight: 800; color: #fff;">20 Credits</div>
-                            <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">180 DH</div>
-                            <span style="font-size: 10px; color: #34d399;">9 DH / cr</span>
+                            <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">€18 / $18 <span style="font-size: 11px; color:#fff;">(180 DH)</span></div>
+                            <span style="font-size: 10px; color: #34d399;">€0.90 (9 DH) / cr</span>
                         </div>
                         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
                             <div style="font-size: 14px; font-weight: 800; color: #fff;">30 Credits</div>
-                            <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">240 DH</div>
-                            <span style="font-size: 10px; color: #34d399;">8 DH / cr</span>
+                            <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">€24 / $24 <span style="font-size: 11px; color:#fff;">(240 DH)</span></div>
+                            <span style="font-size: 10px; color: #34d399;">€0.80 (8 DH) / cr</span>
                         </div>
                         <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--border); border-radius: 10px; padding: 12px; text-align: center;">
                             <div style="font-size: 14px; font-weight: 800; color: #fff;">50 Credits</div>
-                            <div style="font-size: 18px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">350 DH</div>
-                            <span style="font-size: 10px; color: #34d399;">7 DH / cr</span>
+                            <div style="font-size: 15px; font-weight: 800; color: var(--accent-gold); margin: 2px 0;">€35 / $35 <span style="font-size: 11px; color:#fff;">(350 DH)</span></div>
+                            <span style="font-size: 10px; color: #34d399;">€0.70 (7 DH) / cr</span>
                         </div>
                         <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 10px; padding: 12px; text-align: center; grid-column: span 2;">
                             <div style="font-size: 14px; font-weight: 800; color: #fff;">100 Credits (Wholesale VIP)</div>
-                            <div style="font-size: 20px; font-weight: 800; color: #34d399; margin: 2px 0;">600 DH</div>
-                            <span style="font-size: 10px; color: #34d399; font-weight: 700;">6 DH / cr (-40% Discount)</span>
+                            <div style="font-size: 17px; font-weight: 800; color: #34d399; margin: 2px 0;">€60 / $60 <span style="font-size: 12px; color:#fff;">(600 DH)</span></div>
+                            <span style="font-size: 10px; color: #34d399; font-weight: 700;">€0.60 (6 DH) / cr (-40% Discount)</span>
                         </div>
                     </div>
 
@@ -1356,10 +1371,10 @@
                 </p>
 
                 <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
-                    <a href="download" class="btn btn-gold btn-lg">
-                        ⬇️ Download Dreamania Player APK (v1.0.0)
+                    <a href="<?= htmlspecialchars($downloadUrl) ?>" class="btn btn-gold btn-lg">
+                        ⬇️ Download Dreamania Player APK (v<?= htmlspecialchars($appVersion) ?>)
                     </a>
-                    <a href="index.php?panel=1" class="btn btn-secondary btn-lg">
+                    <a href="<?= htmlspecialchars($portalUrl) ?>" class="btn btn-secondary btn-lg">
                         🔐 Reseller / Admin Portal
                     </a>
                 </div>
@@ -1367,7 +1382,7 @@
                 <!-- QR Code Box -->
                 <div>
                     <div class="download-qr-box">
-                        <img src="qr.php?text=https%3A%2F%2Fdm.lumineasy.com%2Fdownload" alt="Scan to Download APK" class="download-qr-img">
+                        <img src="<?= htmlspecialchars($qrUrl) ?>" alt="Scan to Download APK" class="download-qr-img">
                         <div class="download-qr-text">
                             <h5>Scan to Download on TV / Mobile</h5>
                             <p>Point your phone camera or Fire TV Downloader app at this QR code to download instantly.</p>
@@ -1463,14 +1478,14 @@
                 <ul class="footer-links">
                     <li><a href="#features">Features</a></li>
                     <li><a href="#screenshots">Screenshots</a></li>
-                    <li><a href="download">Download APK</a></li>
-                    <li><a href="index.php?panel=1">Admin Portal</a></li>
+                    <li><a href="<?= htmlspecialchars($downloadUrl) ?>">Download APK</a></li>
+                    <li><a href="<?= htmlspecialchars($portalUrl) ?>">Admin Portal</a></li>
                 </ul>
             </div>
 
             <div class="footer-bottom">
                 <div>
-                    &copy; 2026 Dreamania Player. All rights reserved. Powered by <strong>DreamaniaCode</strong>.
+                    &copy; <?= date('Y') ?> Dreamania Player. All rights reserved. Powered by <strong>DreamaniaCode</strong>.
                 </div>
                 <div style="font-size: 12px; color: var(--text-muted);">
                     Legal Notice: Dreamania Player is a standalone media player and does not provide, host, or sell any media content.

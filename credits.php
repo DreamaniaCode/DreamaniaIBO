@@ -520,8 +520,8 @@ $resellerOrders = ($isResellerLogged && $resellerId > 0) ? DB::getOrdersForResel
                 <input type="radio" name="credit_radio" value="10" checked>
                 <div class="pack-credits">10 Crédits</div>
                 <div class="pack-sub">Pack Découverte</div>
-                <div class="pack-price"><?= (int)$pricePacks[10] ?> <span style="font-size: 13px;">DH</span></div>
-                <div class="pack-rate">10 DH / crédit</div>
+                <div class="pack-price">€10 / $10 <span style="font-size: 12px; color: var(--text-secondary);">(<?= (int)$pricePacks[10] ?> DH)</span></div>
+                <div class="pack-rate">€1.00 (10 DH) / crédit</div>
             </div>
 
             <!-- 20 Credits -->
@@ -529,8 +529,8 @@ $resellerOrders = ($isResellerLogged && $resellerId > 0) ? DB::getOrdersForResel
                 <input type="radio" name="credit_radio" value="20">
                 <div class="pack-credits">20 Crédits</div>
                 <div class="pack-sub">Pack Standard</div>
-                <div class="pack-price"><?= (int)$pricePacks[20] ?> <span style="font-size: 13px;">DH</span></div>
-                <div class="pack-rate">9 DH / crédit (-10%)</div>
+                <div class="pack-price">€18 / $18 <span style="font-size: 12px; color: var(--text-secondary);">(<?= (int)$pricePacks[20] ?> DH)</span></div>
+                <div class="pack-rate">€0.90 (9 DH) / crédit (-10%)</div>
             </div>
 
             <!-- 30 Credits -->
@@ -538,8 +538,8 @@ $resellerOrders = ($isResellerLogged && $resellerId > 0) ? DB::getOrdersForResel
                 <input type="radio" name="credit_radio" value="30">
                 <div class="pack-credits">30 Crédits</div>
                 <div class="pack-sub">Pack Pro</div>
-                <div class="pack-price"><?= (int)$pricePacks[30] ?> <span style="font-size: 13px;">DH</span></div>
-                <div class="pack-rate">8 DH / crédit (-20%)</div>
+                <div class="pack-price">€24 / $24 <span style="font-size: 12px; color: var(--text-secondary);">(<?= (int)$pricePacks[30] ?> DH)</span></div>
+                <div class="pack-rate">€0.80 (8 DH) / crédit (-20%)</div>
             </div>
 
             <!-- 50 Credits -->
@@ -548,8 +548,8 @@ $resellerOrders = ($isResellerLogged && $resellerId > 0) ? DB::getOrdersForResel
                 <input type="radio" name="credit_radio" value="50">
                 <div class="pack-credits">50 Crédits</div>
                 <div class="pack-sub">Pack Super Pro</div>
-                <div class="pack-price"><?= (int)$pricePacks[50] ?> <span style="font-size: 13px;">DH</span></div>
-                <div class="pack-rate">7 DH / crédit (-30%)</div>
+                <div class="pack-price">€35 / $35 <span style="font-size: 12px; color: var(--text-secondary);">(<?= (int)$pricePacks[50] ?> DH)</span></div>
+                <div class="pack-rate">€0.70 (7 DH) / crédit (-30%)</div>
             </div>
 
             <!-- 100 Credits -->
@@ -558,8 +558,8 @@ $resellerOrders = ($isResellerLogged && $resellerId > 0) ? DB::getOrdersForResel
                 <input type="radio" name="credit_radio" value="100">
                 <div class="pack-credits">100 Crédits</div>
                 <div class="pack-sub">Pack Grossiste VIP</div>
-                <div class="pack-price"><?= (int)$pricePacks[100] ?> <span style="font-size: 13px;">DH</span></div>
-                <div class="pack-rate">6 DH / crédit (-40%)</div>
+                <div class="pack-price">€60 / $60 <span style="font-size: 12px; color: var(--text-secondary);">(<?= (int)$pricePacks[100] ?> DH)</span></div>
+                <div class="pack-rate">€0.60 (6 DH) / crédit (-40%)</div>
             </div>
         </div>
 

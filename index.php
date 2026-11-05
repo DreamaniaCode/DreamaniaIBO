@@ -1451,6 +1451,18 @@ input:focus, select:focus, textarea:focus {
                 <input type="hidden" name="form_type" value="update_settings">
                 <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
 
+                <div class="card" style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(139, 92, 246, 0.15)); border: 1px solid rgba(16, 185, 129, 0.4); margin-bottom: 24px;">
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <span style="font-size:32px;">💳</span>
+                        <div>
+                            <h3 style="color:#fff; margin:0 0 4px; font-size:18px;">Configuration des Paiements (RIB Bancaire &amp; PayPal)</h3>
+                            <p style="color:#cbd5e1; margin:0; font-size:13px;">
+                                Renseignez ici votre <strong>RIB bancaire marocain (24 chiffres)</strong> pour les virements au Maroc, et votre <strong>adresse email PayPal</strong> pour les paiements internationaux par carte ou solde PayPal.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid-2">
                     <!-- 1. Global System Settings -->
                     <div class="card">

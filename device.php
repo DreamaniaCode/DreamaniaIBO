@@ -1059,7 +1059,7 @@ if ($isClientLogged) {
                             <input type="radio" name="plan" value="sub_1y" checked>
                             <div class="plan-header">
                                 <div class="plan-title">Abonnement 1 An</div>
-                                <div class="plan-price"><?= htmlspecialchars($price1Y) ?> <span style="font-size: 14px; color: var(--text-secondary);">DH</span></div>
+                                <div class="plan-price">€5.00 / $5.00 <span style="font-size: 13px; color: var(--text-secondary);">(<?= htmlspecialchars($price1Y) ?> DH)</span></div>
                             </div>
                             <ul style="list-style: none; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
                                 <li>✔️ Accès complet pendant 12 mois</li>
@@ -1073,7 +1073,7 @@ if ($isClientLogged) {
                             <input type="radio" name="plan" value="sub_lifetime">
                             <div class="plan-header">
                                 <div class="plan-title">Licence Lifetime (À Vie)</div>
-                                <div class="plan-price" style="color: var(--accent-gold);"><?= htmlspecialchars($priceLife) ?> <span style="font-size: 14px; color: var(--text-secondary);">DH</span></div>
+                                <div class="plan-price" style="color: var(--accent-gold);">€15.00 / $15.00 <span style="font-size: 13px; color: var(--text-secondary);">(<?= htmlspecialchars($priceLife) ?> DH)</span></div>
                             </div>
                             <ul style="list-style: none; font-size: 12px; color: var(--text-secondary); line-height: 1.8;">
                                 <li>⭐ <strong>Paiement unique, plus jamais de frais</strong></li>
