@@ -19,6 +19,12 @@ $appReleaseDate = 'Novembre 2026';
 $officialDomain = 'https://dm.lumineasy.com';
 $downloadUrl = 'download';
 $portalUrl = 'device.php';
+
+$c1y_dh = (int)($pricing['client_1y_dh'] ?? 50);
+$c1y_eur = (int)($pricing['client_1y_eur'] ?? 5);
+$clife_dh = (int)($pricing['client_life_dh'] ?? 150);
+$clife_eur = (int)($pricing['client_life_eur'] ?? 15);
+$resellerPacks = $pricing['reseller_packs'] ?? [];
 ?>
 <!DOCTYPE html>
 <html class="dark" lang="fr">
@@ -224,7 +230,7 @@ $portalUrl = 'device.php';
         <!-- Pricing Link -->
         <a class="flex items-center gap-2 px-4 sm:px-5 py-3.5 rounded-xl bg-surface-container/80 hover:bg-surface-container-high text-slate-300 hover:text-white border border-surface-glass-stroke font-label text-sm sm:text-base transition-all" href="#pricing">
           <span class="material-symbols-outlined text-neon-cyan text-[20px]">credit_card</span>
-          <span data-i18n="btn_pricing_link">Tarifs (50 DH / 5€ – 150 DH / 15€)</span>
+          <span data-i18n="btn_pricing_link">Tarifs (<?= $c1y_dh ?> DH / <?= $c1y_eur ?>€ – <?= $clife_dh ?> DH / <?= $clife_eur ?>€)</span>
         </a>
       </div>
 
@@ -646,8 +652,8 @@ $portalUrl = 'device.php';
               <span class="px-3 py-1 rounded-full bg-surface-container text-slate-300 font-label text-xs font-semibold">12 Mois</span>
             </div>
             <div class="flex items-baseline gap-2 mb-6">
-              <span class="font-headline text-4xl sm:text-5xl font-black text-white">50 DH</span>
-              <span class="text-slate-400 font-headline text-xl">/ 5 €</span>
+              <span class="font-headline text-4xl sm:text-5xl font-black text-white"><?= $c1y_dh ?> DH</span>
+              <span class="text-slate-400 font-headline text-xl">/ <?= $c1y_eur ?> €</span>
             </div>
             <ul class="space-y-3 text-xs sm:text-sm text-slate-300 mb-8">
               <li class="flex items-center gap-2.5">
@@ -664,7 +670,7 @@ $portalUrl = 'device.php';
               </li>
             </ul>
           </div>
-          <button type="button" onclick="openPaymentModal('1_year', '50 DH / 5 €')" class="w-full py-3.5 rounded-xl bg-surface-container-highest hover:bg-neon-cyan/20 text-white hover:text-neon-cyan border border-white/10 hover:border-neon-cyan/40 font-label font-bold text-sm transition-all" data-i18n="btn_choose_plan">Activer 1 An (50 DH / 5 €)</button>
+          <button type="button" onclick="openPaymentModal('1_year', '<?= $c1y_dh ?> DH / <?= $c1y_eur ?> €')" class="w-full py-3.5 rounded-xl bg-surface-container-highest hover:bg-neon-cyan/20 text-white hover:text-neon-cyan border border-white/10 hover:border-neon-cyan/40 font-label font-bold text-sm transition-all" data-i18n="btn_choose_plan">Activer 1 An (<?= $c1y_dh ?> DH / <?= $c1y_eur ?> €)</button>
         </div>
 
         <!-- Plan 2: Lifetime Pro (Featured) -->
@@ -676,8 +682,8 @@ $portalUrl = 'device.php';
               <span class="px-3 py-1 rounded-full bg-neon-cyan/20 text-neon-cyan font-label text-xs font-bold">Sans Expiration</span>
             </div>
             <div class="flex items-baseline gap-2 mb-6">
-              <span class="font-headline text-4xl sm:text-5xl font-black text-neon-cyan">150 DH</span>
-              <span class="text-slate-400 font-headline text-xl">/ 15 €</span>
+              <span class="font-headline text-4xl sm:text-5xl font-black text-neon-cyan"><?= $clife_dh ?> DH</span>
+              <span class="text-slate-400 font-headline text-xl">/ <?= $clife_eur ?> €</span>
             </div>
             <ul class="space-y-3 text-xs sm:text-sm text-slate-300 mb-8">
               <li class="flex items-center gap-2.5">
@@ -694,7 +700,7 @@ $portalUrl = 'device.php';
               </li>
             </ul>
           </div>
-          <button type="button" onclick="openPaymentModal('lifetime', '150 DH / 15 €')" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-neon-cyan to-sky-400 text-slate-950 font-label font-extrabold text-sm shadow-[0_0_20px_rgba(0,229,255,0.4)] hover:shadow-[0_0_30px_rgba(0,229,255,0.7)] hover:scale-105 active:scale-95 transition-all" data-i18n="btn_choose_lifetime">Activer À Vie (150 DH / 15 €)</button>
+          <button type="button" onclick="openPaymentModal('lifetime', '<?= $clife_dh ?> DH / <?= $clife_eur ?> €')" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-neon-cyan to-sky-400 text-slate-950 font-label font-extrabold text-sm shadow-[0_0_20px_rgba(0,229,255,0.4)] hover:shadow-[0_0_30px_rgba(0,229,255,0.7)] hover:scale-105 active:scale-95 transition-all" data-i18n="btn_choose_lifetime">Activer À Vie (<?= $clife_dh ?> DH / <?= $clife_eur ?> €)</button>
         </div>
 
       </div>
@@ -708,11 +714,29 @@ $portalUrl = 'device.php';
         <h3 class="font-headline text-xl sm:text-2xl font-bold text-white mb-2" data-i18n="reseller_title">Vous Êtes Revendeur IPTV ou Grossiste ?</h3>
         <p class="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto mb-6" data-i18n="reseller_subtitle">Bénéficiez de notre console de gestion dédiée avec des packs de crédits à tarifs dégressifs exceptionnels pour activer les appareils de vos clients en quelques clics.</p>
         
+        <!-- Dynamic Reseller Wholesale Packs from Database -->
         <div class="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-6">
-          <span class="px-3 py-1.5 rounded-xl bg-surface-container font-mono text-xs text-slate-200">10 Crédits : 150 DH (15 €)</span>
-          <span class="px-3 py-1.5 rounded-xl bg-surface-container font-mono text-xs text-slate-200">20 Crédits : 180 DH (18 €)</span>
-          <span class="px-3 py-1.5 rounded-xl bg-surface-container font-mono text-xs text-slate-200">50 Crédits : 350 DH (35 €)</span>
-          <span class="px-3 py-1.5 rounded-xl bg-surface-container font-mono text-xs text-neon-cyan font-bold border border-neon-cyan/40">100 Crédits : 600 DH (60 €)</span>
+          <?php if (!empty($resellerPacks)): ?>
+            <?php foreach ($resellerPacks as $crNum => $pack): ?>
+              <?php
+                $cr = (int)($pack['credits'] ?? $crNum);
+                $dh = (int)($pack['dh'] ?? 0);
+                $eur = (int)($pack['eur'] ?? 0);
+                $isTop = ($cr >= 100);
+                $boxClass = $isTop 
+                  ? 'text-neon-cyan font-bold border border-neon-cyan/50 shadow-[0_0_15px_rgba(0,229,255,0.3)] bg-neon-cyan/10' 
+                  : 'text-slate-200 border border-surface-glass-stroke bg-surface-container';
+              ?>
+              <span class="px-3.5 py-2 rounded-xl font-mono text-xs sm:text-sm <?= $boxClass ?>">
+                <strong class="text-white"><?= $cr ?> Crédits</strong> : <?= $dh ?> DH (<?= $eur ?> €)
+              </span>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <span class="px-3.5 py-2 rounded-xl bg-surface-container font-mono text-xs sm:text-sm text-slate-200 border border-surface-glass-stroke">10 Crédits : <?= $c1y_dh * 3 ?> DH</span>
+            <span class="px-3.5 py-2 rounded-xl bg-surface-container font-mono text-xs sm:text-sm text-slate-200 border border-surface-glass-stroke">20 Crédits : <?= $c1y_dh * 4 ?> DH</span>
+            <span class="px-3.5 py-2 rounded-xl bg-surface-container font-mono text-xs sm:text-sm text-slate-200 border border-surface-glass-stroke">50 Crédits : <?= $c1y_dh * 7 ?> DH</span>
+            <span class="px-3.5 py-2 rounded-xl bg-surface-container font-mono text-xs sm:text-sm text-neon-cyan font-bold border border-neon-cyan/40">100 Crédits : <?= $c1y_dh * 12 ?> DH</span>
+          <?php endif; ?>
         </div>
 
         <a href="index.php?panel=1" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-electric-violet to-purple-600 text-white font-label font-bold text-sm shadow-[0_0_20px_rgba(139,92,246,0.4)] hover:shadow-[0_0_30px_rgba(139,92,246,0.7)] hover:scale-105 active:scale-95 transition-all">
@@ -1003,6 +1027,14 @@ $portalUrl = 'device.php';
   <!-- JAVASCRIPT LOGIC & BILINGUAL FR / EN TRANSLATIONS        -->
   <!-- ======================================================== -->
   <script>
+    // --- Dynamic Pricing from Database ---
+    const dynamicPricing = {
+      c1y_dh: <?= json_encode($c1y_dh) ?>,
+      c1y_eur: <?= json_encode($c1y_eur) ?>,
+      clife_dh: <?= json_encode($clife_dh) ?>,
+      clife_eur: <?= json_encode($clife_eur) ?>
+    };
+
     // --- Complete Translation Dictionary ---
     const translations = {
       fr: {
@@ -1023,7 +1055,7 @@ $portalUrl = 'device.php';
         btn_download_apk: "Télécharger APK (v1.1.0 Pro)",
         btn_device_portal: "Gérer TV / Téléverser Playlist",
         btn_reseller_panel: "Espace Revendeur",
-        btn_pricing_link: "Tarifs (50 DH / 5€ – 150 DH / 15€)",
+        btn_pricing_link: `Tarifs (${dynamicPricing.c1y_dh} DH / ${dynamicPricing.c1y_eur}€ – ${dynamicPricing.clife_dh} DH / ${dynamicPricing.clife_eur}€)`,
         release_latest_title: "Dernière Version Déployée :",
         code_label: "Code Downloader :",
         release_feat_1: "Sélecteur audio & sous-titres en direct lors de la lecture",
@@ -1095,14 +1127,14 @@ $portalUrl = 'device.php';
         p1_f2: "Moteur Google Media3 ExoPlayer 4K 60FPS",
         p1_f3: "Guide EPG, multi-audio et sous-titres complets",
         p1_f4: "Mises à jour automatiques incluses",
-        btn_choose_plan: "Activer 1 An (50 DH / 5 €)",
+        btn_choose_plan: `Activer 1 An (${dynamicPricing.c1y_dh} DH / ${dynamicPricing.c1y_eur} €)`,
         plan_best_badge: "Offre Ultime",
         plan_life_t: "Licence À Vie PRO",
         p2_f1: "Licence Illimitée à Vie (Sans abonnement récurrent)",
         p2_f2: "Toutes les fonctionnalités Pro débloquées",
         p2_f3: "Accès prioritaire aux 4 thèmes d'interface",
         p2_f4: "Support VIP prioritaire via WhatsApp",
-        btn_choose_lifetime: "Activer À Vie (150 DH / 15 €)",
+        btn_choose_lifetime: `Activer À Vie (${dynamicPricing.clife_dh} DH / ${dynamicPricing.clife_eur} €)`,
         reseller_badge: "Programme Partenaires & Revendeurs",
         reseller_title: "Vous Êtes Revendeur IPTV ou Grossiste ?",
         reseller_subtitle: "Bénéficiez de notre console de gestion dédiée avec des packs de crédits à tarifs dégressifs exceptionnels pour activer les appareils de vos clients en quelques clics.",
@@ -1157,7 +1189,7 @@ $portalUrl = 'device.php';
         btn_download_apk: "Download APK (v1.1.0 Pro)",
         btn_device_portal: "Manage TV / Upload Playlist",
         btn_reseller_panel: "Reseller Portal",
-        btn_pricing_link: "Plans (50 DH / €5 – 150 DH / €15)",
+        btn_pricing_link: `Plans (${dynamicPricing.c1y_dh} DH / €${dynamicPricing.c1y_eur} – ${dynamicPricing.clife_dh} DH / €${dynamicPricing.clife_eur})`,
         release_latest_title: "Latest Official Release:",
         code_label: "Downloader Code:",
         release_feat_1: "Multi-language audio & subtitle switcher during live playback",
@@ -1229,14 +1261,14 @@ $portalUrl = 'device.php';
         p1_f2: "Google Media3 ExoPlayer 4K 60FPS engine",
         p1_f3: "Full EPG guide, multi-audio & subtitle support",
         p1_f4: "Automatic cloud updates included",
-        btn_choose_plan: "Activate 1 Year (50 DH / €5)",
+        btn_choose_plan: `Activate 1 Year (${dynamicPricing.c1y_dh} DH / €${dynamicPricing.c1y_eur})`,
         plan_best_badge: "Ultimate Offer",
         plan_life_t: "Lifetime PRO License",
         p2_f1: "Unlimited Lifetime License (No recurring subscriptions)",
         p2_f2: "All Pro capabilities permanently unlocked",
         p2_f3: "Priority access to all 4 interface mood themes",
         p2_f4: "Priority VIP assistance via WhatsApp",
-        btn_choose_lifetime: "Activate Lifetime (150 DH / €15)",
+        btn_choose_lifetime: `Activate Lifetime (${dynamicPricing.clife_dh} DH / €${dynamicPricing.clife_eur})`,
         reseller_badge: "Partner & Reseller Program",
         reseller_title: "Are You an IPTV Reseller or Wholesaler?",
         reseller_subtitle: "Take advantage of our dedicated management console with tiered credit packs at wholesale rates to activate customer devices in seconds.",
