@@ -19,6 +19,7 @@ RewriteRule ^(device|upload|manage-playlist|manage|playlist)/?$ device.php [QSA,
 RewriteRule ^credits/?$ credits.php [QSA,L]
 
 # Landing page route
+RewriteRule ^landing\.html$ landing.php [R=301,L]
 RewriteRule ^landing/?$ landing.php [QSA,L]
 
 # API routes
