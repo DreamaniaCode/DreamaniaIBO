@@ -902,7 +902,8 @@ $qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dm.l
                 <a href="credits.php" class="btn btn-secondary btn-sm" title="Reseller Credits Wholesale">
                     ⚡ Reseller
                 </a>
-                <a href="<?= htmlspecialchars($downloadUrl) ?>" class="btn btn-primary btn-sm">
+                <a href="<?= htmlspecialchars($downloadUrl) ?>" class="btn btn-primary btn-sm" title="Downloader Code: 7454701">
+                    ⬇️ Download APK (Code: 7454701)
                     ⬇️ Download APK
                 </a>
             </div>
@@ -936,6 +937,16 @@ $qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dm.l
                 <a href="#pricing" class="btn btn-secondary btn-lg">
                     💳 Pricing (€5 / $5 - €15 / $15)
                 </a>
+            </div>
+
+            <!-- Downloader Short Code Highlight -->
+            <div style="display: flex; justify-content: center; margin-top: 24px;">
+                <div style="display: inline-flex; align-items: center; gap: 14px; background: rgba(245, 158, 11, 0.12); border: 1.5px solid rgba(245, 158, 11, 0.45); border-radius: 50px; padding: 10px 24px; box-shadow: 0 8px 25px rgba(245, 158, 11, 0.2); backdrop-filter: blur(16px); flex-wrap: wrap; justify-content: center;">
+                    <span style="font-size: 20px;">🔥</span>
+                    <span style="font-size: 14px; color: #fff; font-weight: 600;">Fire TV &amp; Android TV Downloader Code:</span>
+                    <strong style="font-family: 'JetBrains Mono', monospace; font-size: 22px; font-weight: 800; color: #fbbf24; letter-spacing: 2px;">7454701</strong>
+                    <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; font-size: 10px; font-weight: 800; padding: 3px 10px; border-radius: 20px; text-transform: uppercase;">AFTVnews</span>
+                </div>
             </div>
 
             <div class="hero-meta">
@@ -1174,8 +1185,8 @@ $qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dm.l
                     <div class="step-number">01</div>
                     <h3>Download & Install APK</h3>
                     <p>
-                        Download <code>DreamaniaPlayer.apk</code> directly from our official portal or use the <strong>Downloader app</strong> 
-                        on your Fire TV Stick / Android TV box.
+                        On Fire TV Stick or Android TV, open the free <strong>Downloader app</strong> and enter code <strong style="color: #fbbf24; font-family: 'JetBrains Mono', monospace; font-size: 17px; letter-spacing: 1px;">7454701</strong>, 
+                        or download <code>DreamaniaPlayer.apk</code> directly from our official portal.
                     </p>
                 </div>
 
@@ -1400,8 +1411,9 @@ $qrUrl = "qr.php?text=" . urlencode("https://" . ($_SERVER['HTTP_HOST'] ?? 'dm.l
                     </div>
                     <div class="faq-answer">
                         To install on Fire TV, simply open the free <strong>Downloader app</strong> from the Amazon Appstore, 
-                        enter our download URL <code>https://dm.lumineasy.com/download</code> (or scan the QR code above), 
-                        and select Install. Ensure "Install Unknown Apps" is turned ON in your Fire TV Developer Options.
+                        enter our short code <strong style="color: #fbbf24; font-family: 'JetBrains Mono', monospace; font-size: 17px; letter-spacing: 1px;">7454701</strong> 
+                        (or download URL <code>https://dm.lumineasy.com/download</code>), and click Go. Ensure "Install Unknown Apps" 
+                        is turned ON in your Fire TV Developer Options. Ensure "Install Unknown Apps" is turned ON in your Fire TV Developer Options.
                     </div>
                 </div>
 

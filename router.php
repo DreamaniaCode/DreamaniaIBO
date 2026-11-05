@@ -25,6 +25,7 @@ $apiRoutes = [
     '/app.apk',
     '/DreamaniaPlayer.apk',
     '/DreamaniaIBOPro.apk',
+    '/7454701',
     '/api.php'
 ];
 

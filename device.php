@@ -938,6 +938,17 @@ if ($isClientLogged) {
                     </div>
                 </div>
 
+                <!-- Downloader App Quick Install Box -->
+                <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: var(--radius); padding: 14px 18px; margin-top: 18px; display: flex; align-items: center; gap: 14px;">
+                    <span style="font-size: 26px;">🔥</span>
+                    <div style="font-size: 13px; line-height: 1.5;">
+                        <span style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: #fbbf24; letter-spacing: 0.5px;">Installation sur Smart TV &amp; Fire TV</span>
+                        <div style="color: #fff; margin-top: 2px;">
+                            Téléchargez l'application via <strong>Downloader</strong> avec le code : <strong style="font-family: 'JetBrains Mono', monospace; font-size: 18px; color: #fbbf24; letter-spacing: 1.5px;">7454701</strong>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Quick Pricing Highlights -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 24px;">
                     <div style="background: rgba(139, 92, 246, 0.08); border: 1px solid var(--border-highlight); border-radius: var(--radius); padding: 16px; text-align: center;">

@@ -225,7 +225,8 @@ class DB {
             'price_reseller_20'    => '180',
             'price_reseller_30'    => '240',
             'price_reseller_50'    => '350',
-            'price_reseller_100'   => '600'
+            'price_reseller_100'   => '600',
+            'downloader_code'      => '7454701'
         ];
 
         foreach ($defaults as $k => $v) {
@@ -242,6 +243,13 @@ class DB {
         $stmt10->execute();
         if ($stmt10->fetchColumn() === '100') {
             $pdo->exec("UPDATE settings SET value = '150' WHERE key = 'price_reseller_10'");
+        }
+
+        // Ensure downloader_code exists
+        $stmtDc = $pdo->prepare("SELECT COUNT(*) FROM settings WHERE key = 'downloader_code'");
+        $stmtDc->execute();
+        if ((int)$stmtDc->fetchColumn() === 0) {
+            $pdo->prepare("INSERT INTO settings (key, value) VALUES ('downloader_code', '7454701')")->execute();
         }
 
         // Default DNS
@@ -408,7 +416,9 @@ class DB {
                     'badge'      => '👑 Grossiste VIP (-40%)',
                     'label'      => '€' . round($p100 / 10, 2) . ' / $' . round($p100 / 10, 2) . ' (' . (int)$p100 . ' DH)'
                 ]
-            ]
+            ],
+
+            'downloader_code'     => $settings['downloader_code'] ?? '7454701'
         ];
     }
 

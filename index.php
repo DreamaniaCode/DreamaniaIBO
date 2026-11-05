@@ -331,7 +331,8 @@ if ($isLogged && $_SERVER['REQUEST_METHOD'] === 'POST') {
                     'paypal_email', 'paypal_me_link', 'rib_bank_name', 'rib_account_name',
                     'rib_number', 'rib_swift', 'whatsapp_number',
                     'price_client_1y', 'price_client_life',
-                    'price_reseller_10', 'price_reseller_20', 'price_reseller_30', 'price_reseller_50', 'price_reseller_100'
+                    'price_reseller_10', 'price_reseller_20', 'price_reseller_30', 'price_reseller_50', 'price_reseller_100',
+                    'downloader_code'
                 ];
                 foreach ($settingsToUpdate as $sKey) {
                     if (isset($_POST[$sKey])) {
@@ -1830,6 +1831,23 @@ input:focus, select:focus, textarea:focus {
                         </div>
                     </div>
 
+                    <!-- Downloader Code Configuration -->
+                    <div class="card" style="margin-top: 18px; border: 1px solid rgba(245, 158, 11, 0.4);">
+                        <h2 style="font-size: 16px; color: #fbbf24;">
+                            🔥 AFTVnews Downloader App Integration (Fire TV &amp; Android TV)
+                        </h2>
+                        <div class="form-group" style="margin-top: 12px;">
+                            <label for="downloader_code">Downloader Short Code</label>
+                            <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+                                <input type="text" id="downloader_code" name="downloader_code" value="<?= htmlspecialchars($settings['downloader_code'] ?? '7454701') ?>" style="font-family: 'JetBrains Mono', monospace; font-size: 18px; font-weight: 800; color: #fbbf24; max-width: 200px;" required>
+                                <div style="font-size: 13px; color: var(--muted);">
+                                    Clients enter this code directly in the Downloader app on their TV.<br>
+                                    Short link: <code style="color:#fbbf24;">go.aftvnews.com/<?= htmlspecialchars($settings['downloader_code'] ?? '7454701') ?></code> or <code style="color:#fbbf24;">https://dm.lumineasy.com/<?= htmlspecialchars($settings['downloader_code'] ?? '7454701') ?></code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- 4. Save Button & APK Upload -->
                     <div>
                         <button type="submit" class="btn" style="width:100%; margin-bottom:20px; padding:16px; font-size:16px;">
@@ -1841,6 +1859,15 @@ input:focus, select:focus, textarea:focus {
 
             <div class="card" style="margin-top:20px;">
                 <h2>📲 Application APK File</h2>
+                <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px;">
+                    <span style="font-size: 26px;">🔥</span>
+                    <div>
+                        <div style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: #fbbf24;">Downloader App Short Code</div>
+                        <div style="font-size: 14px; color: #fff; margin-top: 2px;">
+                            Users can install on Fire TV Stick &amp; Android TV by entering code: <strong style="font-family: 'JetBrains Mono', monospace; font-size: 18px; color: #fbbf24; letter-spacing: 1.5px;"><?= htmlspecialchars($settings['downloader_code'] ?? '7454701') ?></strong>
+                        </div>
+                    </div>
+                </div>
                 <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">
                     Upload or replace the client APK served at <code>/download</code>.
                 </p>
