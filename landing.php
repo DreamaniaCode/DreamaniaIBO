@@ -3,13 +3,21 @@ declare(strict_types=1);
 require_once __DIR__ . '/db.php';
 
 $pricing = DB::getPricing();
-$paymentConfig = DB::getPaymentConfig();
-$downloaderCode = $pricing['downloader_code'] ?? '<?= htmlspecialchars($downloaderCode) ?>';
+$paymentConfig = method_exists('DB', 'getPaymentConfig') ? DB::getPaymentConfig() : [
+    'paypal_email'     => DB::getSetting('paypal_email', 'contact@lumineasy.com'),
+    'paypal_me_link'   => DB::getSetting('paypal_me_link', 'https://paypal.me/dreamaniacode'),
+    'rib_bank'         => DB::getSetting('rib_bank_name', 'CIH BANK'),
+    'rib_bank_name'    => DB::getSetting('rib_bank_name', 'CIH BANK'),
+    'rib_account_name' => DB::getSetting('rib_account_name', 'DREAMANIA MEDIA'),
+    'rib_number'       => DB::getSetting('rib_number', '230 780 4567890123456789 12'),
+    'rib_swift'        => DB::getSetting('rib_swift', 'CIHMMAMC'),
+    'whatsapp_number'  => DB::getSetting('whatsapp_number', '+212600000000'),
+];
+$downloaderCode = $pricing['downloader_code'] ?? '7454701';
 $officialDomain = 'https://dm.lumineasy.com';
 $downloadUrl = 'download';
 $portalUrl = 'device.php';
 ?>
-<USER_REQUEST>
 <!DOCTYPE html>
 
 <html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><title>Dreamania Player Pro</title><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&amp;family=Outfit:wght@600;700;800&amp;family=Plus+Jakarta+Sans:wght@400;500;600&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
@@ -1123,9 +1131,3 @@ $portalUrl = 'device.php';
 </div>
 </footer>
 </body></html>
-
-use this for the landing page and entire project and fix series tv issues are not complete not good in manuplution and please bring from the real application some screenshots
-</USER_REQUEST>
-<ADDITIONAL_METADATA>
-The current local time is: 2026-11-05T02:42:59Z.
-</ADDITIONAL_METADATA>

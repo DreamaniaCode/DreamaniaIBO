@@ -422,6 +422,20 @@ class DB {
         ];
     }
 
+    public static function getPaymentConfig(): array {
+        $s = self::getAllSettings();
+        return [
+            'paypal_email'     => $s['paypal_email'] ?? 'contact@lumineasy.com',
+            'paypal_me_link'   => $s['paypal_me_link'] ?? 'https://paypal.me/dreamaniacode',
+            'rib_bank'         => $s['rib_bank_name'] ?? 'CIH BANK',
+            'rib_bank_name'    => $s['rib_bank_name'] ?? 'CIH BANK',
+            'rib_account_name' => $s['rib_account_name'] ?? 'DREAMANIA MEDIA',
+            'rib_number'       => $s['rib_number'] ?? '230 780 4567890123456789 12',
+            'rib_swift'        => $s['rib_swift'] ?? 'CIHMMAMC',
+            'whatsapp_number'  => $s['whatsapp_number'] ?? '+212600000000',
+        ];
+    }
+
     public static function normalizeMac(string $mac): string {
         $clean = preg_replace('/[^a-fA-F0-9]/', '', $mac);
         if (strlen($clean) !== 12) {
