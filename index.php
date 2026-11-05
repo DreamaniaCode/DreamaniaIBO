@@ -1043,7 +1043,10 @@ input:focus, select:focus, textarea:focus {
                 <button type="submit" class="btn" style="width:100%; padding: 12px; margin-top: 8px;">Access Portal</button>
             </form>
             <div style="text-align: center; margin-top: 16px;">
-                <a href="landing.php" style="color: var(--muted); font-size: 13px; text-decoration: none;">◀ Back to Main Landing Page</a>
+                <div style="display:flex; justify-content:center; gap:16px; flex-wrap:wrap;">
+                    <a href="device.php" style="color: var(--accent); font-size: 13px; text-decoration: none; font-weight:700;">📺 Mon Appareil (Playlists)</a>
+                    <a href="landing.php" style="color: var(--muted); font-size: 13px; text-decoration: none;">🏠 Accueil</a>
+                </div>
             </div>
         </div>
 

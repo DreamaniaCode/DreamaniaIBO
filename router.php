@@ -51,7 +51,7 @@ if ($uri === '/credits') {
     exit;
 }
 
-if ($uri === '/admin' || $uri === '/portal' || $uri === '/panel') {
+if ($uri === '/admin' || $uri === '/reseller' || $uri === '/portal' || $uri === '/panel' || $uri === '/login') {
     $_GET['panel'] = '1';
     require __DIR__ . '/index.php';
     exit;

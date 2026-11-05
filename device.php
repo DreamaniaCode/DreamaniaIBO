@@ -868,7 +868,8 @@ if ($isClientLogged) {
 
             <div class="header-nav">
                 <a href="landing.php" class="btn btn-secondary btn-sm">🏠 Accueil</a>
-                <a href="credits.php" class="btn btn-secondary btn-sm">⚡ Crédits Revendeur</a>
+                <a href="index.php?panel=1" class="btn btn-secondary btn-sm">💼 Espace Revendeur</a>
+                <a href="index.php?admin=1" class="btn btn-secondary btn-sm">⚙️ Admin</a>
                 <?php if ($isClientLogged): ?>
                     <a href="device.php?action=logout" class="btn btn-danger btn-sm">Déconnexion</a>
                 <?php endif; ?>
