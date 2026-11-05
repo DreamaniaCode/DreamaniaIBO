@@ -850,7 +850,7 @@ $portalUrl = 'device.php';
 </div>
 <!-- Transparent Moroccan Bank (RIB) / PayPal Pricing Checkout -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="p-6 rounded-2xl bg-surface-container-low/80 border border-surface-glass-stroke backdrop-blur-md flex items-center gap-4">
+<div onclick="document.getElementById('payment-modal').classList.remove('hidden')" class="p-6 rounded-2xl bg-surface-container-low/80 border border-surface-glass-stroke backdrop-blur-md flex items-center gap-4 cursor-pointer hover:border-primary/50 transition-all">
 <div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary text-[24px] border border-surface-glass-stroke shadow-inner">
             🏦
           </div>
@@ -859,7 +859,7 @@ $portalUrl = 'device.php';
 <p class="font-body-sm text-body-sm text-on-surface-variant">CIH Bank, Attijariwafa, Bank of Africa</p>
 </div>
 </div>
-<div class="p-6 rounded-2xl bg-surface-container-low/80 border border-surface-glass-stroke backdrop-blur-md flex items-center gap-4">
+<div onclick="document.getElementById('payment-modal').classList.remove('hidden')" class="p-6 rounded-2xl bg-surface-container-low/80 border border-surface-glass-stroke backdrop-blur-md flex items-center gap-4 cursor-pointer hover:border-primary/50 transition-all">
 <div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary text-[24px] border border-surface-glass-stroke shadow-inner">
             🅿️
           </div>
@@ -868,7 +868,7 @@ $portalUrl = 'device.php';
 <p class="font-body-sm text-body-sm text-on-surface-variant">Worldwide instant automated checkout</p>
 </div>
 </div>
-<div class="p-6 rounded-2xl bg-surface-container-low/80 border border-surface-glass-stroke backdrop-blur-md flex items-center gap-4">
+<div onclick="document.getElementById('payment-modal').classList.remove('hidden')" class="p-6 rounded-2xl bg-surface-container-low/80 border border-surface-glass-stroke backdrop-blur-md flex items-center gap-4 cursor-pointer hover:border-primary/50 transition-all">
 <div class="w-12 h-12 rounded-xl bg-surface-container flex items-center justify-center text-primary text-[24px] border border-surface-glass-stroke shadow-inner">
             💬
           </div>
@@ -1130,4 +1130,129 @@ $portalUrl = 'device.php';
 </div>
 </div>
 </footer>
+
+<!-- Interactive Payment Info Modal / Drawer (PayPal & RIB Transfer) -->
+<div id="payment-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md hidden">
+  <div class="relative w-full max-w-xl rounded-2xl bg-surface-container-low border border-surface-glass-stroke p-6 sm:p-8 shadow-2xl">
+    <button onclick="document.getElementById('payment-modal').classList.add('hidden')" class="absolute top-4 right-4 text-on-surface-variant hover:text-white p-2 rounded-lg bg-surface-container">
+      <span class="material-symbols-outlined text-[20px]">close</span>
+    </button>
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-10 h-10 rounded-xl bg-surface-container-high flex items-center justify-center border border-neon-cyan-bright/30 text-neon-cyan-bright">
+        <span class="material-symbols-outlined">payments</span>
+      </div>
+      <div>
+        <h3 class="font-headline-sm text-lg font-bold text-on-surface">Payment Methods & Verification</h3>
+        <p class="font-body-sm text-xs text-on-surface-variant">Pay via Moroccan Bank Transfer (RIB) or International PayPal</p>
+      </div>
+    </div>
+
+    <!-- Payment Tabs -->
+    <div class="flex gap-2 p-1 rounded-xl bg-surface-container-lowest border border-surface-glass-stroke mb-5">
+      <button onclick="switchPaymentTab('rib')" id="tab-rib" class="flex-1 py-2 text-center text-xs font-bold rounded-lg bg-surface-container-high text-primary transition-all">
+        🏦 Virement Bancaire (RIB Maroc)
+      </button>
+      <button onclick="switchPaymentTab('paypal')" id="tab-paypal" class="flex-1 py-2 text-center text-xs font-bold rounded-lg text-on-surface-variant hover:text-white transition-all">
+        🅿️ PayPal International
+      </button>
+    </div>
+
+    <!-- Content: RIB -->
+    <div id="content-rib" class="space-y-3 font-body-sm text-sm">
+      <div class="p-3.5 rounded-xl bg-surface-container/70 border border-surface-glass-stroke">
+        <span class="text-xs text-on-surface-variant block mb-1">Banque</span>
+        <span class="font-bold text-on-surface"><?= htmlspecialchars($paymentConfig['rib_bank_name']) ?></span>
+      </div>
+      <div class="p-3.5 rounded-xl bg-surface-container/70 border border-surface-glass-stroke">
+        <span class="text-xs text-on-surface-variant block mb-1">Titulaire du compte</span>
+        <span class="font-bold text-on-surface"><?= htmlspecialchars($paymentConfig['rib_account_name']) ?></span>
+      </div>
+      <div class="p-3.5 rounded-xl bg-surface-container/70 border border-surface-glass-stroke flex items-center justify-between">
+        <div>
+          <span class="text-xs text-on-surface-variant block mb-1">Numéro de Compte (RIB 24 chiffres)</span>
+          <span class="font-mono font-bold text-neon-cyan-bright tracking-wider" id="rib-number"><?= htmlspecialchars($paymentConfig['rib_number']) ?></span>
+        </div>
+        <button onclick="copyToClipboard('<?= htmlspecialchars($paymentConfig['rib_number']) ?>', 'Numéro RIB copié !')" class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-primary text-xs font-bold hover:brightness-125 transition-all">
+          Copier
+        </button>
+      </div>
+      <div class="p-3.5 rounded-xl bg-surface-container/70 border border-surface-glass-stroke">
+        <span class="text-xs text-on-surface-variant block mb-1">Code SWIFT / BIC</span>
+        <span class="font-mono text-on-surface"><?= htmlspecialchars($paymentConfig['rib_swift']) ?></span>
+      </div>
+    </div>
+
+    <!-- Content: PayPal -->
+    <div id="content-paypal" class="space-y-3 font-body-sm text-sm hidden">
+      <div class="p-3.5 rounded-xl bg-surface-container/70 border border-surface-glass-stroke flex items-center justify-between">
+        <div>
+          <span class="text-xs text-on-surface-variant block mb-1">Adresse Email PayPal</span>
+          <span class="font-bold text-primary" id="paypal-email"><?= htmlspecialchars($paymentConfig['paypal_email']) ?></span>
+        </div>
+        <button onclick="copyToClipboard('<?= htmlspecialchars($paymentConfig['paypal_email']) ?>', 'Email PayPal copié !')" class="px-3 py-1.5 rounded-lg bg-surface-container-highest text-primary text-xs font-bold hover:brightness-125 transition-all">
+          Copier
+        </button>
+      </div>
+      <a href="<?= htmlspecialchars($paymentConfig['paypal_me_link']) ?>" target="_blank" rel="noopener" class="w-full py-3 rounded-xl bg-[#0070BA] text-white font-bold flex items-center justify-center gap-2 text-xs shadow-lg hover:brightness-110 transition-all">
+        <span>Ouvrir PayPal.me</span>
+        <span class="material-symbols-outlined text-[16px]">open_in_new</span>
+      </a>
+    </div>
+
+    <!-- Footer Action -->
+    <div class="mt-6 pt-4 border-t border-surface-glass-stroke flex items-center justify-between">
+      <span class="text-xs text-on-surface-variant">Besoin d'aide ou confirmation ?</span>
+      <a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $paymentConfig['whatsapp_number']) ?>" target="_blank" rel="noopener" class="px-4 py-2 rounded-xl bg-[#25D366] text-white font-bold text-xs flex items-center gap-1.5 hover:brightness-110 transition-all">
+        <span>Confirmation WhatsApp</span>
+      </a>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function switchPaymentTab(tab) {
+  if (tab === 'rib') {
+    document.getElementById('content-rib').classList.remove('hidden');
+    document.getElementById('content-paypal').classList.add('hidden');
+    document.getElementById('tab-rib').classList.add('bg-surface-container-high', 'text-primary');
+    document.getElementById('tab-rib').classList.remove('text-on-surface-variant');
+    document.getElementById('tab-paypal').classList.remove('bg-surface-container-high', 'text-primary');
+    document.getElementById('tab-paypal').classList.add('text-on-surface-variant');
+  } else {
+    document.getElementById('content-rib').classList.add('hidden');
+    document.getElementById('content-paypal').classList.remove('hidden');
+    document.getElementById('tab-paypal').classList.add('bg-surface-container-high', 'text-primary');
+    document.getElementById('tab-paypal').classList.remove('text-on-surface-variant');
+    document.getElementById('tab-rib').classList.remove('bg-surface-container-high', 'text-primary');
+    document.getElementById('tab-rib').classList.add('text-on-surface-variant');
+  }
+}
+
+function copyToClipboard(text, msg) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(msg || 'Copié dans le presse-papier !');
+  }).catch(() => {
+    alert(text);
+  });
+}
+
+function showToast(msg) {
+  let toast = document.getElementById('live-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'live-toast';
+    toast.className = 'fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl bg-neon-cyan-bright text-surface-container-lowest font-bold text-xs shadow-2xl transition-all transform duration-300';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  toast.style.transform = 'translateY(0)';
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transform = 'translateY(10px)';
+  }, 2500);
+}
+</script>
+
 </body></html>

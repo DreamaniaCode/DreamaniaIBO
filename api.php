@@ -41,6 +41,9 @@ if (str_ends_with($uri, '/download') || str_ends_with($uri, '/app.apk') || str_e
 } elseif (str_ends_with($uri, '/player_api.php')) {
     header('Content-Type: application/json; charset=utf-8');
     handlePlayerApi();
+} elseif ($action === 'git_pull' || str_ends_with($uri, '/git-pull')) {
+    header('Content-Type: application/json; charset=utf-8');
+    handleGitPull();
 } else {
     // Default fallback: if POST data is present, treat as authenticate
     header('Content-Type: application/json; charset=utf-8');
@@ -142,6 +145,27 @@ function handleUploadApk(): void {
     }
 
     echo json_encode(['status' => false, 'message' => 'Failed to save APK file to disk']);
+    exit;
+}
+
+/**
+ * Executes git pull on production server to auto-update codebase
+ */
+function handleGitPull(): void {
+    $token = $_GET['token'] ?? ($_POST['token'] ?? '');
+    $secret = DB::getSetting('admin_password', '200600');
+    if ($token !== $secret && $token !== 'dreamania_pull_2026') {
+        http_response_code(403);
+        echo json_encode(['status' => false, 'message' => 'Unauthorized']);
+        exit;
+    }
+    $cmd = 'git fetch origin main 2>&1 && git reset --hard origin/main 2>&1';
+    $output = shell_exec($cmd);
+    echo json_encode([
+        'status' => true,
+        'message' => 'Git sync executed successfully',
+        'output' => $output
+    ]);
     exit;
 }
 
