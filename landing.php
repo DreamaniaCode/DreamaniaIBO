@@ -17,7 +17,7 @@ $paymentConfig = method_exists('DB', 'getPaymentConfig') ? DB::getPaymentConfig(
     'whatsapp_number'  => DB::getSetting('whatsapp_number', '+212600000000'),
 ];
 $downloaderCode = $pricing['downloader_code'] ?? '7454701';
-$appVersion = 'v1.2.2 PRO';
+$appVersion = 'v1.2.3 PRO';
 $appReleaseDate = 'Novembre 2026';
 $officialDomain = 'https://dm.lumineasy.com';
 $downloadUrl = 'download';
@@ -1055,7 +1055,7 @@ $resellerPacks = $pricing['reseller_packs'] ?? [];
         hero_title_hl: "Nouvelle Génération",
         hero_title_2: " Taillé pour Votre Smart TV",
         hero_desc: "Conçu pour un zapping instantané, le streaming sportif 4K 60FPS et la VOD cinéma enrichie TMDb. Propulsé par Google Media3 ExoPlayer avec zéro superflu et une navigation fluide dédiée à la télécommande TV.",
-        btn_download_apk: "Télécharger APK (v1.2.2 Pro)",
+        btn_download_apk: "Télécharger APK (v1.2.3 Pro)",
         btn_device_portal: "Gérer TV / Téléverser Playlist",
         btn_reseller_panel: "Espace Revendeur",
         btn_pricing_link: `Tarifs (${dynamicPricing.c1y_dh} DH / ${dynamicPricing.c1y_eur}€ – ${dynamicPricing.clife_dh} DH / ${dynamicPricing.clife_eur}€)`,
@@ -1189,7 +1189,7 @@ $resellerPacks = $pricing['reseller_packs'] ?? [];
         hero_title_hl: "Media Player",
         hero_title_2: " Engineered for Smart TV",
         hero_desc: "Engineered for instantaneous channel zapping, 4K 60FPS sports streaming, and TMDb-enriched cinema VOD. Powered by Google Media3 ExoPlayer with zero bloatware and dedicated Fire TV remote D-Pad navigation.",
-        btn_download_apk: "Download APK (v1.2.2 Pro)",
+        btn_download_apk: "Download APK (v1.2.3 Pro)",
         btn_device_portal: "Manage TV / Upload Playlist",
         btn_reseller_panel: "Reseller Portal",
         btn_pricing_link: `Plans (${dynamicPricing.c1y_dh} DH / €${dynamicPricing.c1y_eur} – ${dynamicPricing.clife_dh} DH / €${dynamicPricing.clife_eur})`,

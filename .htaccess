@@ -1,12 +1,11 @@
 RewriteEngine On
 RewriteBase /
 
-# Stop processing for real files and directories
-RewriteCond %{REQUEST_FILENAME} -f [OR]
-RewriteCond %{REQUEST_FILENAME} -d
-RewriteRule ^ - [L]
+# Redirect legacy static landing.html to dynamic landing.php with live database pricing
+RewriteRule ^landing\.html$ landing.php [R=301,L]
+RewriteRule ^landing/?$ landing.php [QSA,L]
 
-# Download route (including short Downloader code 7454701)
+# Download route (including short Downloader code 7454701 and APK filenames)
 RewriteRule ^(download|app\.apk|DreamaniaPlayer\.apk|DreamaniaIBOPro\.apk|7454701)/?$ api.php?action=download_apk [QSA,L]
 
 # Admin & Reseller Portal routes
@@ -18,9 +17,10 @@ RewriteRule ^(device|upload|manage-playlist|manage|playlist)/?$ device.php [QSA,
 # Reseller credits wholesale portal
 RewriteRule ^credits/?$ credits.php [QSA,L]
 
-# Landing page route
-RewriteRule ^landing\.html$ landing.php [R=301,L]
-RewriteRule ^landing/?$ landing.php [QSA,L]
+# Stop processing for other real files and directories (css, js, images, etc.)
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
 
 # API routes
 RewriteRule ^authenticate/?$ api.php?action=authenticate [QSA,L]

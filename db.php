@@ -238,12 +238,7 @@ class DB {
             }
         }
 
-        // Migrate price_reseller_10 from old 100 to 150 if untouched
-        $stmt10 = $pdo->prepare("SELECT value FROM settings WHERE key = 'price_reseller_10'");
-        $stmt10->execute();
-        if ($stmt10->fetchColumn() === '100') {
-            $pdo->exec("UPDATE settings SET value = '150' WHERE key = 'price_reseller_10'");
-        }
+        // Reseller prices sync enabled dynamically without forced reset
 
         // Ensure downloader_code exists
         $stmtDc = $pdo->prepare("SELECT COUNT(*) FROM settings WHERE key = 'downloader_code'");
