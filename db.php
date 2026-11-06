@@ -197,6 +197,34 @@ class DB {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )");
 
+        // App In-App Notifications table (Popups displayed on TV & Mobile)
+        $pdo->exec("CREATE TABLE IF NOT EXISTS app_notifications (
+            id {$autoId},
+            type VARCHAR(50) NOT NULL DEFAULT 'info',
+            title VARCHAR(255) NOT NULL,
+            message TEXT NOT NULL,
+            target_type VARCHAR(50) DEFAULT 'all',
+            target_value VARCHAR(255) DEFAULT '',
+            is_active INT DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+
+        // Seed default notification if empty
+        try {
+            $countNotif = (int) $pdo->query("SELECT COUNT(*) FROM app_notifications")->fetchColumn();
+            if ($countNotif === 0) {
+                $stmtNotif = $pdo->prepare("INSERT INTO app_notifications (type, title, message, target_type, target_value, is_active) VALUES (?, ?, ?, 'all', '', 1)");
+                $stmtNotif->execute([
+                    'update',
+                    'Mise à jour v1.2.5 PRO active !',
+                    'Bienvenue sur Dreamania Player ! La version v1.2.5 PRO est déployée avec le lecteur vidéo optimisé, navigation D-Pad fluide et accès direct aux pistes audio et sous-titres.'
+                ]);
+            }
+        } catch (Throwable $e) {
+            error_log("Failed to seed default app notification: " . $e->getMessage());
+        }
+
         // Reseller Broadcast Messages / Announcements table
         $pdo->exec("CREATE TABLE IF NOT EXISTS reseller_messages (
             id {$autoId},
@@ -491,7 +519,7 @@ class DB {
         return self::getOrCreateDeviceManual($mac, $androidId, $appType, $appVersion);
     }
 
-    public static function getOrCreateDeviceManual(string $mac, string $androidId = '', string $appType = 'tv', string $appVersion = '1.2.5', string $deviceModel = ''): array {
+    public static function getOrCreateDeviceManual(string $mac, string $androidId = '', string $appType = 'tv', string $appVersion = '1.2.6', string $deviceModel = ''): array {
         $mac = self::normalizeMac($mac);
         $pdo = self::getConnection();
 
@@ -525,11 +553,18 @@ class DB {
     public static function getAllDevices(?int $resellerId = null): array {
         $pdo = self::getConnection();
         if ($resellerId !== null && $resellerId > 0) {
-            $stmt = $pdo->prepare("SELECT * FROM devices WHERE reseller_id = ? ORDER BY id DESC");
+            $stmt = $pdo->prepare("SELECT d.*, r.name AS reseller_name, r.username AS reseller_username 
+                                    FROM devices d 
+                                    LEFT JOIN resellers r ON d.reseller_id = r.id 
+                                    WHERE d.reseller_id = ? 
+                                    ORDER BY d.id DESC");
             $stmt->execute([$resellerId]);
             return $stmt->fetchAll();
         }
-        return $pdo->query("SELECT * FROM devices ORDER BY id DESC")->fetchAll();
+        return $pdo->query("SELECT d.*, r.name AS reseller_name, r.username AS reseller_username 
+                            FROM devices d 
+                            LEFT JOIN resellers r ON d.reseller_id = r.id 
+                            ORDER BY d.id DESC")->fetchAll();
     }
 
     public static function getDeviceById(int $id): ?array {
@@ -1126,4 +1161,45 @@ class DB {
         $stmt = $pdo->prepare("DELETE FROM reseller_messages WHERE id = ?");
         return $stmt->execute([$id]);
     }
+
+    // --- In-App Notifications (Popup alerts in Android App) ---
+
+    public static function getActiveInAppNotification(?string $mac = null, ?int $resellerId = null): ?array {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("SELECT * FROM app_notifications WHERE is_active = 1 ORDER BY id DESC LIMIT 1");
+        $stmt->execute();
+        $res = $stmt->fetch();
+        return $res ?: null;
+    }
+
+    public static function getAllAppNotifications(): array {
+        $pdo = self::getConnection();
+        return $pdo->query("SELECT * FROM app_notifications ORDER BY id DESC")->fetchAll();
+    }
+
+    public static function addAppNotification(string $type, string $title, string $message, string $targetType = 'all', string $targetValue = '', int $isActive = 1): int {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("INSERT INTO app_notifications (type, title, message, target_type, target_value, is_active) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$type, $title, $message, $targetType, $targetValue, $isActive]);
+        return (int)$pdo->lastInsertId();
+    }
+
+    public static function updateAppNotification(int $id, string $type, string $title, string $message, string $targetType = 'all', string $targetValue = '', int $isActive = 1): bool {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("UPDATE app_notifications SET type = ?, title = ?, message = ?, target_type = ?, target_value = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        return $stmt->execute([$type, $title, $message, $targetType, $targetValue, $isActive, $id]);
+    }
+
+    public static function toggleAppNotification(int $id): bool {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("UPDATE app_notifications SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+
+    public static function deleteAppNotification(int $id): bool {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("DELETE FROM app_notifications WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+
 }

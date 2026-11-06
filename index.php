@@ -376,7 +376,7 @@ if ($isLogged && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 }
                 if (empty($badge)) {
                     $badge = match ($type) {
-                        'update' => '🚀 Mise à jour v1.2.5 PRO',
+                        'update' => '🚀 Mise à jour v1.2.6 PRO',
                         'action' => "⚠️ Consignes d'action",
                         'alert'  => '🚨 Alerte Importante',
                         default  => '📢 Annonce Revendeurs'
@@ -419,6 +419,55 @@ if ($isLogged && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 }
             }
 
+            // 14. In-App Notifications for Android Application (Admin Only)
+            elseif ($formType === 'add_app_notification' && $role === 'admin') {
+                $type = trim((string)($_POST['notif_type'] ?? 'info'));
+                $title = trim((string)($_POST['notif_title'] ?? ''));
+                $message = trim((string)($_POST['notif_message'] ?? ''));
+                $targetType = trim((string)($_POST['notif_target_type'] ?? 'all'));
+                $targetValue = trim((string)($_POST['notif_target_value'] ?? ''));
+                $isActive = isset($_POST['notif_is_active']) ? 1 : 0;
+
+                if (empty($title) || empty($message)) {
+                    throw new Exception("Le titre et le message de la notification sont obligatoires.");
+                }
+
+                DB::addAppNotification($type, $title, $message, $targetType, $targetValue, $isActive);
+                $msg = "Notification enregistrée ! Elle s'affichera sous forme de pop-up dans l'application Android.";
+                $msgType = "success";
+            } elseif ($formType === 'edit_app_notification' && $role === 'admin') {
+                $nId = (int)($_POST['notification_id'] ?? 0);
+                $type = trim((string)($_POST['notif_type'] ?? 'info'));
+                $title = trim((string)($_POST['notif_title'] ?? ''));
+                $message = trim((string)($_POST['notif_message'] ?? ''));
+                $targetType = trim((string)($_POST['notif_target_type'] ?? 'all'));
+                $targetValue = trim((string)($_POST['notif_target_value'] ?? ''));
+                $isActive = isset($_POST['notif_is_active']) ? 1 : 0;
+
+                if ($nId <= 0 || empty($title) || empty($message)) {
+                    throw new Exception("Paramètres de notification invalides.");
+                }
+
+                DB::updateAppNotification($nId, $type, $title, $message, $targetType, $targetValue, $isActive);
+                $msg = "Notification d'application mise à jour avec succès !";
+                $msgType = "success";
+            } elseif ($formType === 'toggle_app_notification' && $role === 'admin') {
+                $nId = (int)($_POST['notification_id'] ?? 0);
+                if ($nId > 0) {
+                    DB::toggleAppNotification($nId);
+                    $msg = "Statut de la notification modifié !";
+                    $msgType = "success";
+                }
+            } elseif ($formType === 'delete_app_notification' && $role === 'admin') {
+                $nId = (int)($_POST['notification_id'] ?? 0);
+                if ($nId > 0) {
+                    DB::deleteAppNotification($nId);
+                    $msg = "Notification d'application supprimée.";
+                    $msgType = "success";
+                }
+            }
+
+
 
         } catch (Exception $e) {
             $msg = $e->getMessage();
@@ -438,6 +487,8 @@ $pricing = DB::getPricing();
 $ordersList = ($isLogged && $role === 'admin') ? DB::getAllOrders() : [];
 $latestResellerMessage = DB::getLatestResellerMessage();
 $allResellerMessages = ($isLogged && $role === 'admin') ? DB::getAllResellerMessages() : [];
+$allAppNotifications = ($isLogged && $role === 'admin') ? DB::getAllAppNotifications() : [];
+$activeAppNotification = DB::getActiveInAppNotification();
 $pendingOrdersCount = 0;
 if ($role === 'admin') {
     foreach ($ordersList as $o) {
@@ -1320,7 +1371,7 @@ input:focus, select:focus, textarea:focus {
 
                         <div class="broadcast-quick-actions">
                             <a href="https://dm.lumineasy.com/download" class="btn btn-sm" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff; text-decoration: none; padding: 7px 14px; font-weight: 700; border-radius: 8px;">
-                                ⬇️ Télécharger APK v1.2.5 PRO
+                                ⬇️ Télécharger APK v1.2.6 PRO
                             </a>
                             <button type="button" class="btn-quick-copy" onclick="copyDownloaderCode('7454701', this)">
                                 📋 Code Downloader : <strong>7454701</strong>
@@ -1429,8 +1480,9 @@ input:focus, select:focus, textarea:focus {
                     <table>
                         <thead>
                             <tr>
-                                <th>MAC Address</th>
+                                <th>MAC Address &amp; Appareil</th>
                                 <th>Device Key</th>
+                                <th>Propriétaire / Revendeur</th>
                                 <th>Status / Expiry</th>
                                 <th>Active Playlists</th>
                                 <th>Quick Activations</th>
@@ -1440,7 +1492,7 @@ input:focus, select:focus, textarea:focus {
                         <tbody>
                             <?php if (empty($devices)): ?>
                                 <tr>
-                                    <td colspan="6" style="text-align:center; padding: 28px; color: var(--muted);">
+                                    <td colspan="7" style="text-align:center; padding: 28px; color: var(--muted);">
                                         No registered devices found. Click "Add Xtream User" to register a device.
                                     </td>
                                 </tr>
@@ -1480,15 +1532,42 @@ input:focus, select:focus, textarea:focus {
                                                 <span style="background:<?= $devBadgeBg ?>; color:<?= $devBadgeColor ?>; border:1px solid <?= $devBadgeBorder ?>; padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:700;">
                                                     <?= $devIcon ?>
                                                 </span>
-                                                <span style="font-size:10.5px; color:var(--muted);">v<?= htmlspecialchars($d['app_version'] ?? '1.2.5') ?></span>
+                                                <span style="font-size:10.5px; color:var(--muted);">v<?= htmlspecialchars($d['app_version'] ?? '1.2.6') ?></span>
                                             </div>
                                             <?php if (!empty($devModel)): ?>
-                                                <div style="font-size:10.5px; color:#cbd5e1; margin-top:2px;">🔹 <?= $devModel ?></div>
+                                                <div style="font-size:11px; color:#cbd5e1; margin-top:3px; font-weight:600;">🔹 <?= $devModel ?></div>
                                             <?php endif; ?>
+                                            <?php
+                                                $lastSeenTs = !empty($d['last_seen']) ? strtotime($d['last_seen']) : 0;
+                                                $lastSeenText = ($lastSeenTs > 0) ? date('d/m/Y H:i', $lastSeenTs) : 'Non connecté';
+                                            ?>
+                                            <div style="font-size:10px; color:var(--muted); margin-top:3px;">🕒 Vu : <?= $lastSeenText ?></div>
                                         </td>
                                         <td>
                                             <span class="key-badge"><?= htmlspecialchars($d['device_key']) ?></span>
                                             <div style="font-size:11px; color:var(--muted); margin-top:2px;">Pin: <?= htmlspecialchars($d['parent_control'] ?? '0000') ?></div>
+                                        </td>
+                                        <td>
+                                            <?php if (!empty($d['reseller_name'])): ?>
+                                                <div style="display:flex; align-items:center; gap:6px;">
+                                                    <span style="font-size:15px;">👤</span>
+                                                    <div>
+                                                        <strong style="color:#c4b5fd; font-size:13px;"><?= htmlspecialchars($d['reseller_name']) ?></strong>
+                                                        <div style="font-size:10.5px; color:var(--muted);">@<?= htmlspecialchars($d['reseller_username'] ?? '') ?></div>
+                                                    </div>
+                                                </div>
+                                                <span class="badge" style="background:rgba(139,92,246,0.18); color:#c4b5fd; border:1px solid rgba(139,92,246,0.4); font-size:10px; margin-top:4px;">
+                                                    Revendeur #<?= (int)$d['reseller_id'] ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <div style="display:flex; align-items:center; gap:6px;">
+                                                    <span style="font-size:15px;">🛡️</span>
+                                                    <div>
+                                                        <strong style="color:#94a3b8; font-size:12.5px;">Direct / Super Admin</strong>
+                                                        <div style="font-size:10.5px; color:var(--muted);">Sans revendeur</div>
+                                                    </div>
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
                                         <td>
                                             <span class="status-pill <?= $statusClass ?>"><?= $statusText ?></span>
@@ -2043,12 +2122,12 @@ input:focus, select:focus, textarea:focus {
 
                         <div class="form-group">
                             <label for="msg_badge">Badge / En-tête de l'annonce</label>
-                            <input type="text" id="msg_badge" name="msg_badge" value="🚀 Mise à jour v1.2.5 PRO" required placeholder="ex: 🚀 Mise à jour v1.2.5 PRO">
+                            <input type="text" id="msg_badge" name="msg_badge" value="🚀 Mise à jour v1.2.6 PRO" required placeholder="ex: 🚀 Mise à jour v1.2.6 PRO">
                         </div>
 
                         <div class="form-group">
                             <label for="msg_title">Titre de l'Annonce</label>
-                            <input type="text" id="msg_title" name="msg_title" required placeholder="ex: Dreamania Player v1.2.5 PRO est disponible !">
+                            <input type="text" id="msg_title" name="msg_title" required placeholder="ex: Dreamania Player v1.2.6 PRO est disponible !">
                         </div>
 
                         <div class="form-group">
@@ -2067,9 +2146,9 @@ input:focus, select:focus, textarea:focus {
                         <div class="form-group">
                             <label for="msg_action_notes">
                                 📋 Consignes Spécifiques aux Revendeurs ("Faire ceci ou faire cela")
-                                <small style="display:block; color:var(--muted); font-size:11px;">Directives pratiques que vos revendeurs doivent appliquer (ex: Inviter les clients à installer la v1.2.5...)</small>
+                                <small style="display:block; color:var(--muted); font-size:11px;">Directives pratiques que vos revendeurs doivent appliquer (ex: Inviter les clients à installer la v1.2.6...)</small>
                             </label>
-                            <textarea id="msg_action_notes" name="msg_action_notes" rows="4" placeholder="• Prévenez vos clients d'installer la mise à jour v1.2.5 PRO via Downloader (code 7454701).&#10;• Rechargez vos crédits dans votre espace pour activer de nouveaux comptes."></textarea>
+                            <textarea id="msg_action_notes" name="msg_action_notes" rows="4" placeholder="• Prévenez vos clients d'installer la mise à jour v1.2.6 PRO via Downloader (code 7454701).&#10;• Rechargez vos crédits dans votre espace pour activer de nouveaux comptes."></textarea>
                         </div>
 
                         <div class="form-group" style="display:flex; align-items:center; gap:10px;">
@@ -2231,6 +2310,222 @@ input:focus, select:focus, textarea:focus {
                             <?php endif; ?>
                         </tbody>
                     </table>
+                </div>
+            </div>
+
+
+            <!-- Section 2: In-App Notifications for Android App (Popups on TV & Mobile) -->
+            <div class="card" style="margin-top:30px; background:linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(16, 185, 129, 0.1)); border: 1px solid rgba(6, 182, 212, 0.35);">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <span style="font-size:34px;">📱</span>
+                    <div>
+                        <h2 style="margin:0 0 4px; font-size:20px; color:#fff;">Notifications pour l'Application Android (Pop-up sur Smart TV &amp; Téléphone)</h2>
+                        <p style="color:#cbd5e1; margin:0; font-size:13px; line-height:1.5;">
+                            Rédigez ici des <strong>notifications qui s'affichent directement sur l'application Android</strong> de vos clients (en boîte de dialogue / pop-up). Idéal pour annoncer une maintenance, une nouvelle mise à jour, ou un message important.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Compose App Notification Form -->
+                <div class="card card-3d">
+                    <h2>📲 Créer une Notification dans l'App</h2>
+                    <form method="post">
+                        <input type="hidden" name="form_type" value="add_app_notification">
+                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+
+                        <div class="form-group">
+                            <label for="notif_type">Type d'Alerte</label>
+                            <select id="notif_type" name="notif_type">
+                                <option value="info">📢 Information Générale</option>
+                                <option value="update">🚀 Nouveauté &amp; Mise à Jour (v1.2.6 PRO)</option>
+                                <option value="alert">⚠️ Alerte &amp; Maintenance Serveur</option>
+                                <option value="promo">💎 Offre &amp; Renouvellement</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notif_title">Titre de la Notification</label>
+                            <input type="text" id="notif_title" name="notif_title" required placeholder="ex: Mise à jour v1.2.6 PRO disponible !">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notif_message">Message Affiché sur l'Écran (Smart TV &amp; Mobile)</label>
+                            <textarea id="notif_message" name="notif_message" rows="4" required placeholder="Ce message apparaîtra en boîte de dialogue sur l'écran du client à l'ouverture de l'application..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notif_target_type">Ciblage des Appareils</label>
+                            <select id="notif_target_type" name="notif_target_type">
+                                <option value="all">🌐 Tous les appareils (Smart TV &amp; Téléphones)</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="notif_is_active" name="notif_is_active" value="1" checked style="width:auto;">
+                            <label for="notif_is_active" style="margin:0; cursor:pointer; font-weight:700;">
+                                Notification active (s'affiche immédiatement à l'ouverture de l'application)
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn" style="width:100%; padding:12px; font-weight:800; background:linear-gradient(135deg, #06b6d4, #3b82f6); margin-top:8px;">
+                            📱 Diffuser la Notification dans l'Application
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Live Preview of App Dialog -->
+                <div>
+                    <div class="card" style="border: 2px dashed rgba(6, 182, 212, 0.4); background: rgba(10, 8, 20, 0.7);">
+                        <h2>👁️ Aperçu de la Pop-up sur l'Écran (TV / Mobile)</h2>
+                        <p style="color:var(--muted); font-size:12px; margin-bottom:16px;">
+                            Simulation du rendu de la boîte de dialogue telle qu'elle apparaîtra sur l'appareil du client :
+                        </p>
+
+                        <?php if ($activeAppNotification): ?>
+                            <div style="background:#0f172a; border:2px solid #06b6d4; border-radius:16px; padding:20px; box-shadow:0 12px 35px rgba(0,0,0,0.7); max-width:420px; margin:0 auto;">
+                                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                                    <span style="font-size:22px;">📢</span>
+                                    <strong style="color:#fff; font-size:16px;"><?= htmlspecialchars($activeAppNotification['title']) ?></strong>
+                                </div>
+                                <p style="color:#cbd5e1; font-size:13px; line-height:1.6; margin-bottom:16px;">
+                                    <?= nl2br(htmlspecialchars($activeAppNotification['message'])) ?>
+                                </p>
+                                <div style="text-align:right;">
+                                    <span style="display:inline-block; background:linear-gradient(135deg, #06b6d4, #3b82f6); color:#fff; font-size:12px; font-weight:800; padding:7px 16px; border-radius:8px;">
+                                        OK, J'ai compris
+                                    </span>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <div style="text-align:center; padding:30px; color:var(--muted); font-size:13px;">
+                                Aucune notification d'application active pour le moment.
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+
+            <!-- App Notifications Table -->
+            <div class="card" style="margin-top:24px;">
+                <h2>📋 Historique des Notifications Application</h2>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Statut</th>
+                                <th>Date</th>
+                                <th>Titre</th>
+                                <th>Message Affiché</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($allAppNotifications)): ?>
+                                <tr>
+                                    <td colspan="5" style="text-align:center; padding:24px; color:var(--muted);">
+                                        Aucune notification d'application enregistrée.
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($allAppNotifications as $an): ?>
+                                    <tr>
+                                        <td>
+                                            <?php if ((int)$an['is_active'] === 1): ?>
+                                                <span class="badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; border:1px solid rgba(16, 185, 129, 0.4);">
+                                                    ✅ Active
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge" style="background:rgba(148, 163, 184, 0.15); color:#94a3b8; border:1px solid rgba(148, 163, 184, 0.4);">
+                                                    ⏸️ Masquée
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td style="font-size:12px; color:var(--muted); white-space:nowrap;">
+                                            <?= htmlspecialchars(date('d/m/Y H:i', strtotime($an['created_at']))) ?>
+                                        </td>
+                                        <td>
+                                            <strong style="color:#38bdf8;"><?= htmlspecialchars($an['title']) ?></strong>
+                                        </td>
+                                        <td style="font-size:12.5px; color:#cbd5e1; max-width:380px;">
+                                            <?= htmlspecialchars($an['message']) ?>
+                                        </td>
+                                        <td style="text-align:right; white-space:nowrap;">
+                                            <div style="display:inline-flex; gap:6px;">
+                                                <form method="post" style="display:inline;">
+                                                    <input type="hidden" name="form_type" value="toggle_app_notification">
+                                                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                                                    <input type="hidden" name="notification_id" value="<?= (int)$an['id'] ?>">
+                                                    <button type="submit" class="btn btn-sm btn-secondary">
+                                                        <?= (int)$an['is_active'] === 1 ? '⏸️ Masquer' : '▶️ Activer' ?>
+                                                    </button>
+                                                </form>
+
+                                                <button type="button" class="btn btn-sm btn-secondary" onclick='openEditAppNotifModal(<?= json_encode($an, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>)'>
+                                                    ✏️ Modifier
+                                                </button>
+
+                                                <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer définitivement cette notification d'application ?');">
+                                                    <input type="hidden" name="form_type" value="delete_app_notification">
+                                                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                                                    <input type="hidden" name="notification_id" value="<?= (int)$an['id'] ?>">
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        🗑️
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Edit App Notification Modal -->
+            <div id="editAppNotifModal" class="modal">
+                <div class="modal-content" style="max-width:600px;">
+                    <button type="button" class="modal-close" onclick="closeEditAppNotifModal()">&times;</button>
+                    <h2 style="margin-bottom:18px;">✏️ Modifier la Notification dans l'Application</h2>
+                    <form method="post">
+                        <input type="hidden" name="form_type" value="edit_app_notification">
+                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                        <input type="hidden" id="edit_an_id" name="notification_id" value="">
+
+                        <div class="form-group">
+                            <label for="edit_an_type">Type d'Alerte</label>
+                            <select id="edit_an_type" name="notif_type">
+                                <option value="info">📢 Information Générale</option>
+                                <option value="update">🚀 Nouveauté &amp; Mise à Jour</option>
+                                <option value="alert">⚠️ Alerte &amp; Maintenance</option>
+                                <option value="promo">💎 Offre Spéciale</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit_an_title">Titre de la Notification</label>
+                            <input type="text" id="edit_an_title" name="notif_title" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit_an_message">Message Affiché</label>
+                            <textarea id="edit_an_message" name="notif_message" rows="4" required></textarea>
+                        </div>
+
+                        <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="edit_an_is_active" name="notif_is_active" value="1" style="width:auto;">
+                            <label for="edit_an_is_active" style="margin:0; cursor:pointer; font-weight:700;">
+                                Notification active dans l'application
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn" style="width:100%; padding:12px; font-weight:800;">
+                            Enregistrer les Modifications
+                        </button>
+                    </form>
                 </div>
             </div>
 
@@ -2579,7 +2874,7 @@ function updateDefaultBadge(type) {
     const badgeInput = document.getElementById('msg_badge');
     if (!badgeInput) return;
     switch(type) {
-        case 'update': badgeInput.value = '🚀 Mise à jour v1.2.5 PRO'; break;
+        case 'update': badgeInput.value = '🚀 Mise à jour v1.2.6 PRO'; break;
         case 'action': badgeInput.value = '⚠️ Consignes d\'action'; break;
         case 'alert':  badgeInput.value = '🚨 Alerte Importante'; break;
         default:       badgeInput.value = '📢 Annonce Revendeurs'; break;
@@ -2596,6 +2891,20 @@ function openEditMessageModal(m) {
     document.getElementById('edit_msg_action_notes').value = m.action_notes || '';
     document.getElementById('edit_msg_is_active').checked = (parseInt(m.is_active) === 1);
     document.getElementById('editMessageModal').classList.add('open');
+}
+
+
+function openEditAppNotifModal(an) {
+    document.getElementById('edit_an_id').value = an.id;
+    document.getElementById('edit_an_type').value = an.type;
+    document.getElementById('edit_an_title').value = an.title;
+    document.getElementById('edit_an_message').value = an.message;
+    document.getElementById('edit_an_is_active').checked = (parseInt(an.is_active) === 1);
+    document.getElementById('editAppNotifModal').classList.add('open');
+}
+
+function closeEditAppNotifModal() {
+    document.getElementById('editAppNotifModal').classList.remove('open');
 }
 
 function closeEditMessageModal() {

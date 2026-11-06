@@ -242,7 +242,7 @@ function handleAuthenticate(): void {
     if ($appType !== 'mobile' && $appType !== 'tv') {
         $appType = 'tv';
     }
-    $version = trim((string)($payload['version'] ?? ($_GET['version'] ?? '1.2.5')));
+    $version = trim((string)($payload['version'] ?? ($_GET['version'] ?? '1.2.6')));
     $deviceModel = trim((string)($payload['device_model'] ?? ($_GET['device_model'] ?? '')));
 
     // If direct MAC provided in payload or query
@@ -304,25 +304,48 @@ function handleAuthenticate(): void {
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
     $baseUrl = "{$scheme}://{$host}";
 
+    // Look up reseller if device belongs to one
+    $resellerName = '';
+    if (!empty($device['reseller_id']) && (int)$device['reseller_id'] > 0) {
+        $resellerData = DB::getReseller((int)$device['reseller_id']);
+        if ($resellerData) {
+            $resellerName = $resellerData['name'] ?? '';
+        }
+    }
+
+    // In-App Notification check
+    $notif = DB::getActiveInAppNotification();
+    $notifId = $notif ? (int)$notif['id'] : 0;
+    $notifTitle = $notif ? $notif['title'] : ($settings['note_title'] ?? 'Dreamania Player');
+    $notifMsg = $notif ? $notif['message'] : ($settings['note_content'] ?? 'Welcome to Dreamania Player!');
+    $notifType = $notif ? $notif['type'] : 'info';
+
     $appInfo = [
-        'mac_registered' => true,
-        'mac_address'    => $macAddress,
-        'device_key'     => $deviceKey,
-        'expire_date'    => $expireDate,
-        'is_trial'       => $isTrial,
-        'lock'           => 0,
-        'price'          => $settings['price'] ?? '0',
-        'note_title'     => $settings['note_title'] ?? 'Dreamania Player',
-        'note_content'   => $settings['note_content'] ?? 'Welcome to Dreamania Player!',
-        'parent_control' => $parentCode,
-        'parent_synced'  => 1,
-        'theme'          => $settings['theme'] ?? 'default',
-        'qr_url'         => $settings['qr_url'] ?: "{$baseUrl}/qr.php?text=",
-        'subtitle_url'   => $settings['subtitle_url'] ?: $baseUrl,
-        'app_version'    => $settings['app_version'] ?? '1.0.0',
-        'apk_link'       => !empty($settings['apk_link']) ? $settings['apk_link'] : "https://dm.lumineasy.com/download",
-        'portals'        => $portals,
-        'urls'           => $urls,
+        'mac_registered'       => true,
+        'mac_address'          => $macAddress,
+        'device_key'           => $deviceKey,
+        'expire_date'          => $expireDate,
+        'is_trial'             => $isTrial,
+        'lock'                 => 0,
+        'price'                => $settings['price'] ?? '0',
+        'note_title'           => $notifTitle,
+        'note_content'         => $notifMsg,
+        'notification_id'      => $notifId,
+        'notification_title'   => $notifTitle,
+        'notification_message' => $notifMsg,
+        'notification_type'    => $notifType,
+        'reseller_name'        => $resellerName,
+        'app_type'             => $device['app_type'] ?? 'tv',
+        'device_model'         => $device['notes'] ?? '',
+        'parent_control'       => $parentCode,
+        'parent_synced'        => 1,
+        'theme'                => $settings['theme'] ?? 'default',
+        'qr_url'               => $settings['qr_url'] ?: "{$baseUrl}/qr.php?text=",
+        'subtitle_url'         => $settings['subtitle_url'] ?: $baseUrl,
+        'app_version'          => $settings['app_version'] ?? '1.2.6',
+        'apk_link'             => !empty($settings['apk_link']) ? $settings['apk_link'] : "https://dm.lumineasy.com/download",
+        'portals'              => $portals,
+        'urls'                 => $urls,
     ];
 
     $jsonPayload = json_encode($appInfo, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
