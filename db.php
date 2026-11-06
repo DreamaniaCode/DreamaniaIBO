@@ -197,6 +197,38 @@ class DB {
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )");
 
+        // Reseller Broadcast Messages / Announcements table
+        $pdo->exec("CREATE TABLE IF NOT EXISTS reseller_messages (
+            id {$autoId},
+            type VARCHAR(50) NOT NULL DEFAULT 'update',
+            badge VARCHAR(100) NOT NULL DEFAULT '🚀 Mise à jour',
+            title VARCHAR(255) NOT NULL,
+            content TEXT NOT NULL,
+            changelog TEXT,
+            action_notes TEXT,
+            is_active INT DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )");
+
+        // Seed default release message for v1.2.5 PRO if empty
+        try {
+            $countMsg = (int) $pdo->query("SELECT COUNT(*) FROM reseller_messages")->fetchColumn();
+            if ($countMsg === 0) {
+                $stmtMsg = $pdo->prepare("INSERT INTO reseller_messages (type, badge, title, content, changelog, action_notes, is_active) VALUES (?, ?, ?, ?, ?, ?, 1)");
+                $stmtMsg->execute([
+                    'update',
+                    '🚀 Mise à jour v1.2.5 PRO',
+                    'Dreamania Player v1.2.5 PRO est disponible (Déblocage OSD vidéo & Navigation TV)',
+                    "Chers partenaires revendeurs, la nouvelle mise à jour v1.2.5 PRO de Dreamania Player a été déployée avec succès en production. Cette mise à jour majeure résout définitivement les blocages de télécommande sur le lecteur vidéo et apporte des performances optimales pour vos clients.",
+                    "• Correction totale du blocage D-Pad sur l'OSD : les boutons -10s et +10s ne piègent plus le curseur.\n• Accès direct et fluide à toutes les pistes audio multi-langues et sous-titres intégrés.\n• Prise en charge complète du bouton Aspect Ratio, Favoris, Vitesse de lecture et Tiroir des chaînes.\n• Défilement horizontal automatique de la barre de contrôle pour les écrans TV.\n• Détection automatique Mobile vs TV avec mise en page responsive optimisée.\n• Code Downloader officiel : 7454701 | Téléchargement direct : https://dm.lumineasy.com/download",
+                    "• Informez immédiatement vos clients ayant rencontré des soucis de télécommande d'installer la mise à jour v1.2.5 PRO via Downloader (code 7454701).\n• Pour les nouveaux appareils, veillez à toujours recommander cette dernière version pour éviter tout ticket de support.\n• Vérifiez l'état de vos crédits dans votre espace pour assurer l'activation instantanée des comptes de vos clients."
+                ]);
+            }
+        } catch (Throwable $e) {
+            error_log("Failed to seed default reseller message: " . $e->getMessage());
+        }
+
         // Default settings
         $defaults = [
             'admin_password'       => '200600',
@@ -1044,5 +1076,54 @@ class DB {
         $pdo = self::getConnection();
         $stmt = $pdo->prepare("UPDATE resellers SET credits = credits + ? WHERE id = ?");
         return $stmt->execute([$credits, $resellerId]);
+    }
+
+    // --- Reseller Announcements & Broadcast Messages ---
+
+    public static function getLatestResellerMessage(): ?array {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("SELECT * FROM reseller_messages WHERE is_active = 1 ORDER BY id DESC LIMIT 1");
+        $stmt->execute();
+        $res = $stmt->fetch();
+        return $res ?: null;
+    }
+
+    public static function getAllResellerMessages(bool $activeOnly = false): array {
+        $pdo = self::getConnection();
+        $sql = "SELECT * FROM reseller_messages " . ($activeOnly ? "WHERE is_active = 1 " : "") . "ORDER BY id DESC";
+        return $pdo->query($sql)->fetchAll();
+    }
+
+    public static function getResellerMessageById(int $id): ?array {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("SELECT * FROM reseller_messages WHERE id = ?");
+        $stmt->execute([$id]);
+        $res = $stmt->fetch();
+        return $res ?: null;
+    }
+
+    public static function addResellerMessage(string $type, string $badge, string $title, string $content, ?string $changelog = null, ?string $actionNotes = null, int $isActive = 1): int {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("INSERT INTO reseller_messages (type, badge, title, content, changelog, action_notes, is_active) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$type, $badge, $title, $content, $changelog, $actionNotes, $isActive]);
+        return (int)$pdo->lastInsertId();
+    }
+
+    public static function updateResellerMessage(int $id, string $type, string $badge, string $title, string $content, ?string $changelog = null, ?string $actionNotes = null, int $isActive = 1): bool {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("UPDATE reseller_messages SET type = ?, badge = ?, title = ?, content = ?, changelog = ?, action_notes = ?, is_active = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        return $stmt->execute([$type, $badge, $title, $content, $changelog, $actionNotes, $isActive, $id]);
+    }
+
+    public static function toggleResellerMessageStatus(int $id): bool {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("UPDATE reseller_messages SET is_active = CASE WHEN is_active = 1 THEN 0 ELSE 1 END, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
+
+    public static function deleteResellerMessage(int $id): bool {
+        $pdo = self::getConnection();
+        $stmt = $pdo->prepare("DELETE FROM reseller_messages WHERE id = ?");
+        return $stmt->execute([$id]);
     }
 }

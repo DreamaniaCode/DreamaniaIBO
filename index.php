@@ -136,7 +136,7 @@ if (!$isLogged && !$wantsPanel) {
 }
 
 // Handle Authenticated Actions
-if ($isLogged && $_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($isLogged && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf'] ?? '')) {
         $msg = "Session verification failed.";
         $msgType = "error";
@@ -361,6 +361,65 @@ if ($isLogged && $_SERVER['REQUEST_METHOD'] === 'POST') {
                 $msgType = "success";
             }
 
+            // 13. Reseller Broadcast Message Management (Admin Only)
+            elseif ($formType === 'add_reseller_message' && $role === 'admin') {
+                $type = trim((string)($_POST['msg_type'] ?? 'update'));
+                $badge = trim((string)($_POST['msg_badge'] ?? ''));
+                $title = trim((string)($_POST['msg_title'] ?? ''));
+                $content = trim((string)($_POST['msg_content'] ?? ''));
+                $changelog = trim((string)($_POST['msg_changelog'] ?? ''));
+                $actionNotes = trim((string)($_POST['msg_action_notes'] ?? ''));
+                $isActive = isset($_POST['msg_is_active']) ? 1 : 0;
+
+                if (empty($title) || empty($content)) {
+                    throw new Exception("Le titre et le contenu principal sont requis.");
+                }
+                if (empty($badge)) {
+                    $badge = match ($type) {
+                        'update' => '🚀 Mise à jour v1.2.5 PRO',
+                        'action' => "⚠️ Consignes d'action",
+                        'alert'  => '🚨 Alerte Importante',
+                        default  => '📢 Annonce Revendeurs'
+                    };
+                }
+
+                DB::addResellerMessage($type, $badge, $title, $content, $changelog ?: null, $actionNotes ?: null, $isActive);
+                $msg = "Message diffusé avec succès sur la page d'accueil des revendeurs !";
+                $msgType = "success";
+            } elseif ($formType === 'edit_reseller_message' && $role === 'admin') {
+                $mId = (int)($_POST['message_id'] ?? 0);
+                $type = trim((string)($_POST['msg_type'] ?? 'update'));
+                $badge = trim((string)($_POST['msg_badge'] ?? ''));
+                $title = trim((string)($_POST['msg_title'] ?? ''));
+                $content = trim((string)($_POST['msg_content'] ?? ''));
+                $changelog = trim((string)($_POST['msg_changelog'] ?? ''));
+                $actionNotes = trim((string)($_POST['msg_action_notes'] ?? ''));
+                $isActive = isset($_POST['msg_is_active']) ? 1 : 0;
+
+                if ($mId <= 0 || empty($title) || empty($content)) {
+                    throw new Exception("Paramètres de message invalides.");
+                }
+
+                DB::updateResellerMessage($mId, $type, $badge, $title, $content, $changelog ?: null, $actionNotes ?: null, $isActive);
+                $msg = "Message revendeur mis à jour avec succès !";
+                $msgType = "success";
+            } elseif ($formType === 'toggle_reseller_message' && $role === 'admin') {
+                $mId = (int)($_POST['message_id'] ?? 0);
+                if ($mId > 0) {
+                    DB::toggleResellerMessageStatus($mId);
+                    $msg = "Statut de diffusion du message modifié !";
+                    $msgType = "success";
+                }
+            } elseif ($formType === 'delete_reseller_message' && $role === 'admin') {
+                $mId = (int)($_POST['message_id'] ?? 0);
+                if ($mId > 0) {
+                    DB::deleteResellerMessage($mId);
+                    $msg = "Message supprimé avec succès.";
+                    $msgType = "success";
+                }
+            }
+
+
         } catch (Exception $e) {
             $msg = $e->getMessage();
             $msgType = "error";
@@ -377,6 +436,8 @@ $recentLines = ($isLogged && $role === 'admin') ? DB::getRecentLineActivity(30) 
 $settings = $isLogged ? DB::getAllSettings() : [];
 $pricing = DB::getPricing();
 $ordersList = ($isLogged && $role === 'admin') ? DB::getAllOrders() : [];
+$latestResellerMessage = DB::getLatestResellerMessage();
+$allResellerMessages = ($isLogged && $role === 'admin') ? DB::getAllResellerMessages() : [];
 $pendingOrdersCount = 0;
 if ($role === 'admin') {
     foreach ($ordersList as $o) {
@@ -387,7 +448,7 @@ if ($role === 'admin') {
 }
 
 $activeTab = $_GET['tab'] ?? 'playlists';
-if ($role === 'reseller' && in_array($activeTab, ['dns', 'settings', 'resellers', 'lines', 'orders'])) {
+if ($role === 'reseller' && in_array($activeTab, ['dns', 'settings', 'resellers', 'lines', 'orders', 'messages'])) {
     $activeTab = 'playlists';
 }
 
@@ -937,6 +998,170 @@ input:focus, select:focus, textarea:focus {
         margin-top: auto;
     }
 }
+
+/* Reseller Broadcast Banner & Announcement Cards */
+.reseller-broadcast-card {
+    background: rgba(18, 14, 33, 0.88);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(139, 92, 246, 0.38);
+    border-radius: 18px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 12px 40px rgba(10, 8, 20, 0.55), 0 0 25px rgba(139, 92, 246, 0.15);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+.reseller-broadcast-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #8b5cf6, #06b6d4, #f59e0b, #ec4899);
+}
+.broadcast-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.broadcast-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+}
+.broadcast-badge.type-update {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(99, 102, 241, 0.35));
+    border: 1px solid rgba(139, 92, 246, 0.6);
+    color: #c4b5fd;
+    box-shadow: 0 2px 12px rgba(139, 92, 246, 0.25);
+}
+.broadcast-badge.type-action {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.25), rgba(217, 119, 6, 0.35));
+    border: 1px solid rgba(245, 158, 11, 0.6);
+    color: #fde68a;
+    box-shadow: 0 2px 12px rgba(245, 158, 11, 0.25);
+}
+.broadcast-badge.type-alert {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.25), rgba(220, 38, 38, 0.35));
+    border: 1px solid rgba(239, 68, 68, 0.6);
+    color: #fca5a5;
+    box-shadow: 0 2px 12px rgba(239, 68, 68, 0.25);
+}
+.broadcast-badge.type-notice {
+    background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(37, 99, 235, 0.35));
+    border: 1px solid rgba(6, 182, 212, 0.6);
+    color: #a5f3fc;
+    box-shadow: 0 2px 12px rgba(6, 182, 212, 0.25);
+}
+.broadcast-date {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.broadcast-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+    line-height: 1.35;
+}
+.broadcast-content {
+    font-size: 14px;
+    line-height: 1.65;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+}
+.broadcast-section-box {
+    background: rgba(10, 8, 20, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 16px 20px;
+    margin-top: 14px;
+}
+.broadcast-section-box.changelog-box {
+    border-color: rgba(139, 92, 246, 0.3);
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.08), rgba(10, 8, 20, 0.65));
+}
+.broadcast-section-box.action-box {
+    border-color: rgba(245, 158, 11, 0.35);
+    background: linear-gradient(180deg, rgba(245, 158, 11, 0.09), rgba(10, 8, 20, 0.65));
+}
+.section-box-header {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.section-box-header.purple { color: #c4b5fd; }
+.section-box-header.gold { color: #fde68a; }
+.broadcast-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.broadcast-list li {
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #e2e8f0;
+    margin-bottom: 6px;
+    position: relative;
+    padding-left: 20px;
+}
+.broadcast-list li::before {
+    content: "•";
+    position: absolute;
+    left: 4px;
+    font-weight: bold;
+}
+.broadcast-list.changelog li::before { color: #a78bfa; }
+.broadcast-list.action li::before { color: #fbbf24; }
+.broadcast-quick-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.btn-quick-copy {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+.btn-quick-copy:hover {
+    background: rgba(255, 255, 255, 0.16);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
 </style>
 </head>
 <body>
@@ -1051,6 +1276,78 @@ input:focus, select:focus, textarea:focus {
         </div>
 
     <?php else: ?>
+        <!-- Reseller Latest Message & Update Announcement Banner -->
+        <?php if ($latestResellerMessage && ($role === 'reseller' || $activeTab === 'playlists')): ?>
+            <div class="reseller-broadcast-card card-3d">
+                <div class="broadcast-top-row">
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <span class="broadcast-badge type-<?= htmlspecialchars($latestResellerMessage['type'] ?? 'update') ?>">
+                            <?= htmlspecialchars($latestResellerMessage['badge'] ?? '📢 Flash Info') ?>
+                        </span>
+                        <?php if ($role === 'admin'): ?>
+                            <span style="background:rgba(255,255,255,0.08); color:var(--muted); font-size:11px; padding:2px 8px; border-radius:6px; font-weight:700;">
+                                👁️ Aperçu Revendeur
+                            </span>
+                            <a href="?tab=messages" style="color:var(--accent); font-size:11.5px; font-weight:700; text-decoration:none;">
+                                ✏️ Modifier / Gérer les annonces
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                    <div class="broadcast-date">
+                        🕒 Publié le <?= htmlspecialchars(date('d/m/Y H:i', strtotime($latestResellerMessage['created_at'] ?? 'now'))) ?>
+                    </div>
+                </div>
+
+                <div class="broadcast-title">
+                    <?= htmlspecialchars($latestResellerMessage['title']) ?>
+                </div>
+
+                <div class="broadcast-content">
+                    <?= nl2br(htmlspecialchars($latestResellerMessage['content'])) ?>
+                </div>
+
+                <?php if (!empty($latestResellerMessage['changelog'])): ?>
+                    <div class="broadcast-section-box changelog-box">
+                        <div class="section-box-header purple">
+                            <span>📦 Changelog &amp; Nouveautés de la mise à jour</span>
+                        </div>
+                        <ul class="broadcast-list changelog">
+                            <?php foreach (explode("\n", trim($latestResellerMessage['changelog'])) as $line): ?>
+                                <?php $line = trim($line); if (empty($line)) continue; ?>
+                                <li><?= htmlspecialchars(ltrim($line, "•- \t")) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+
+                        <div class="broadcast-quick-actions">
+                            <a href="https://dm.lumineasy.com/download" class="btn btn-sm" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff; text-decoration: none; padding: 7px 14px; font-weight: 700; border-radius: 8px;">
+                                ⬇️ Télécharger APK v1.2.5 PRO
+                            </a>
+                            <button type="button" class="btn-quick-copy" onclick="copyDownloaderCode('7454701', this)">
+                                📋 Code Downloader : <strong>7454701</strong>
+                            </button>
+                            <button type="button" class="btn-quick-copy" onclick="copyDirectLink('https://dm.lumineasy.com/download', this)">
+                                🔗 Copier Lien Direct
+                            </button>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
+                <?php if (!empty($latestResellerMessage['action_notes'])): ?>
+                    <div class="broadcast-section-box action-box">
+                        <div class="section-box-header gold">
+                            <span>📋 Directives &amp; Consignes de l'administrateur aux revendeurs</span>
+                        </div>
+                        <ul class="broadcast-list action">
+                            <?php foreach (explode("\n", trim($latestResellerMessage['action_notes'])) as $line): ?>
+                                <?php $line = trim($line); if (empty($line)) continue; ?>
+                                <li><?= htmlspecialchars(ltrim($line, "•- \t")) ?></li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+
         <!-- Stats Bar -->
         <div class="stats-grid">
             <div class="stat-card card-3d">
@@ -1113,6 +1410,7 @@ input:focus, select:focus, textarea:focus {
                     <?php endif; ?>
                 </a>
                 <a href="?tab=resellers" class="tab-link <?= $activeTab === 'resellers' ? 'active' : '' ?>">👥 Resellers</a>
+                <a href="?tab=messages" class="tab-link <?= $activeTab === 'messages' ? 'active' : '' ?>" style="border-color: rgba(139, 92, 246, 0.45);">📢 Messages Revendeurs</a>
                 <a href="?tab=dns" class="tab-link <?= $activeTab === 'dns' ? 'active' : '' ?>">🌐 DNS Portals</a>
                 <a href="?tab=lines" class="tab-link <?= $activeTab === 'lines' ? 'active' : '' ?>">📈 Used Lines</a>
                 <a href="?tab=settings" class="tab-link <?= $activeTab === 'settings' ? 'active' : '' ?>">⚙️ Settings &amp; Pricing</a>
@@ -1711,6 +2009,290 @@ input:focus, select:focus, textarea:focus {
                 </div>
             </div>
 
+        <?php elseif ($activeTab === 'messages' && $role === 'admin'): ?>
+            <!-- Admin Reseller Messages & Broadcast Management -->
+            <div class="card" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(6, 182, 212, 0.1)); border: 1px solid rgba(139, 92, 246, 0.35); margin-bottom: 24px;">
+                <div style="display:flex; align-items:center; gap:16px;">
+                    <span style="font-size:34px;">📢</span>
+                    <div>
+                        <h2 style="margin:0 0 4px; font-size:20px; color:#fff;">Centre de Diffusion &amp; Consignes aux Revendeurs</h2>
+                        <p style="color:#cbd5e1; margin:0; font-size:13px; line-height:1.5;">
+                            Rédigez et publiez les annonces destinées à vos revendeurs : annonces de <strong>mise à jour avec changelog</strong>, <strong>consignes d'action prioritaires</strong> ("faire ceci ou faire cela"), alertes ou informations générales. Le dernier message actif s'affiche automatiquement en tête de leur page d'accueil.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <!-- Compose / Publish Form -->
+                <div class="card card-3d">
+                    <h2>✏️ Rédiger une Nouvelle Diffusion</h2>
+                    <form method="post">
+                        <input type="hidden" name="form_type" value="add_reseller_message">
+                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+
+                        <div class="form-group">
+                            <label for="msg_type">Type de Message</label>
+                            <select id="msg_type" name="msg_type" onchange="updateDefaultBadge(this.value)">
+                                <option value="update">🚀 Nouvelle Mise à jour / Release (avec Changelog)</option>
+                                <option value="action">⚠️ Consignes d'action ("Faire ceci / faire cela")</option>
+                                <option value="notice">📢 Annonce Générale / Information</option>
+                                <option value="alert">🚨 Alerte Urgente / Maintenance</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="msg_badge">Badge / En-tête de l'annonce</label>
+                            <input type="text" id="msg_badge" name="msg_badge" value="🚀 Mise à jour v1.2.5 PRO" required placeholder="ex: 🚀 Mise à jour v1.2.5 PRO">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="msg_title">Titre de l'Annonce</label>
+                            <input type="text" id="msg_title" name="msg_title" required placeholder="ex: Dreamania Player v1.2.5 PRO est disponible !">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="msg_content">Message Principal / Explication</label>
+                            <textarea id="msg_content" name="msg_content" rows="4" required placeholder="Rédigez ici le message détaillé pour vos revendeurs..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="msg_changelog">
+                                📦 Changelog &amp; Notes Techniques (Optionnel)
+                                <small style="display:block; color:var(--muted); font-size:11px;">Indiquez un élément par ligne avec un tiret ou une puce (ex: • Correction navigation OSD...)</small>
+                            </label>
+                            <textarea id="msg_changelog" name="msg_changelog" rows="4" placeholder="• Correction D-Pad sur le lecteur vidéo&#10;• Accès direct aux pistes audio et sous-titres&#10;• Code Downloader : 7454701"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="msg_action_notes">
+                                📋 Consignes Spécifiques aux Revendeurs ("Faire ceci ou faire cela")
+                                <small style="display:block; color:var(--muted); font-size:11px;">Directives pratiques que vos revendeurs doivent appliquer (ex: Inviter les clients à installer la v1.2.5...)</small>
+                            </label>
+                            <textarea id="msg_action_notes" name="msg_action_notes" rows="4" placeholder="• Prévenez vos clients d'installer la mise à jour v1.2.5 PRO via Downloader (code 7454701).&#10;• Rechargez vos crédits dans votre espace pour activer de nouveaux comptes."></textarea>
+                        </div>
+
+                        <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="msg_is_active" name="msg_is_active" value="1" checked style="width:auto;">
+                            <label for="msg_is_active" style="margin:0; cursor:pointer; font-weight:700;">
+                                Rendre cette annonce active immédiatement sur la page d'accueil des revendeurs
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn" style="width:100%; padding:12px; font-size:14px; font-weight:800; background:linear-gradient(135deg, #8b5cf6, #6366f1); margin-top:8px;">
+                            📢 Publier l'Annonce pour Tous les Revendeurs
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Right Side: Reseller Preview & Tips -->
+                <div>
+                    <div class="card" style="margin-bottom:20px;">
+                        <h2>👁️ Aperçu Réel Revendeur</h2>
+                        <p style="color:var(--muted); font-size:12.5px; margin-bottom:14px;">
+                            Voici ce que vos revendeurs voient actuellement en tête de leur tableau de bord :
+                        </p>
+
+                        <?php if ($latestResellerMessage): ?>
+                            <div class="reseller-broadcast-card" style="margin-bottom:0; box-shadow:none;">
+                                <div class="broadcast-top-row">
+                                    <span class="broadcast-badge type-<?= htmlspecialchars($latestResellerMessage['type'] ?? 'update') ?>">
+                                        <?= htmlspecialchars($latestResellerMessage['badge'] ?? '📢 Flash Info') ?>
+                                    </span>
+                                    <span class="broadcast-date">
+                                        🕒 <?= htmlspecialchars(date('d/m/Y H:i', strtotime($latestResellerMessage['created_at'] ?? 'now'))) ?>
+                                    </span>
+                                </div>
+                                <div class="broadcast-title" style="font-size:17px;">
+                                    <?= htmlspecialchars($latestResellerMessage['title']) ?>
+                                </div>
+                                <div class="broadcast-content" style="font-size:13px;">
+                                    <?= nl2br(htmlspecialchars($latestResellerMessage['content'])) ?>
+                                </div>
+                                <?php if (!empty($latestResellerMessage['changelog'])): ?>
+                                    <div class="broadcast-section-box changelog-box" style="padding:12px 14px;">
+                                        <div class="section-box-header purple" style="font-size:11.5px;">
+                                            <span>📦 Changelog</span>
+                                        </div>
+                                        <ul class="broadcast-list changelog">
+                                            <?php foreach (array_slice(explode("\n", trim($latestResellerMessage['changelog'])), 0, 4) as $line): ?>
+                                                <?php $line = trim($line); if (empty($line)) continue; ?>
+                                                <li style="font-size:12.5px;"><?= htmlspecialchars(ltrim($line, "•- \t")) ?></li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        <?php else: ?>
+                            <div style="text-align:center; padding:30px; color:var(--muted); font-size:13px;">
+                                Aucune annonce active pour le moment. Rédigez un message à gauche pour la publier.
+                            </div>
+                        <?php endif; ?>
+                    </div>
+
+                    <div class="card">
+                        <h2>💡 Bonnes Pratiques de Communication</h2>
+                        <ul style="color:#cbd5e1; font-size:13px; line-height:1.7; padding-left:18px;">
+                            <li><strong>Mises à jour (Releases) :</strong> Rappelez systématiquement le code Downloader (<code>7454701</code>) et les points résolus dans le changelog.</li>
+                            <li><strong>Consignes d'action :</strong> Utilisez la case "Consignes spécifiques" pour formuler des étapes claires (1. Faire ceci, 2. Faire cela).</li>
+                            <li><strong>Historique :</strong> Vous pouvez désactiver temporairement un message ou en diffuser un nouveau à tout moment ci-dessous.</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messages History & Management Table -->
+            <div class="card" style="margin-top:24px;">
+                <h2>📋 Historique de Tous les Messages &amp; Diffusions</h2>
+
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Statut</th>
+                                <th>Date</th>
+                                <th>Type / Badge</th>
+                                <th>Titre du Message</th>
+                                <th>Changelog / Consignes</th>
+                                <th style="text-align:right;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($allResellerMessages)): ?>
+                                <tr>
+                                    <td colspan="6" style="text-align:center; padding:28px; color:var(--muted);">
+                                        Aucun message diffusé pour le moment.
+                                    </td>
+                                </tr>
+                            <?php else: ?>
+                                <?php foreach ($allResellerMessages as $m): ?>
+                                    <tr>
+                                        <td>
+                                            <?php if ((int)$m['is_active'] === 1): ?>
+                                                <span class="badge" style="background:rgba(16, 185, 129, 0.15); color:#10b981; border:1px solid rgba(16, 185, 129, 0.4);">
+                                                    ✅ Actif
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="badge" style="background:rgba(148, 163, 184, 0.15); color:#94a3b8; border:1px solid rgba(148, 163, 184, 0.4);">
+                                                    ⏸️ Masqué
+                                                </span>
+                                            <?php endif; ?>
+                                        </td>
+                                        <td style="font-size:12px; color:var(--muted); white-space:nowrap;">
+                                            <?= htmlspecialchars(date('d/m/Y H:i', strtotime($m['created_at']))) ?>
+                                        </td>
+                                        <td>
+                                            <span class="broadcast-badge type-<?= htmlspecialchars($m['type']) ?>" style="font-size:11px; padding:3px 10px;">
+                                                <?= htmlspecialchars($m['badge']) ?>
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <strong><?= htmlspecialchars($m['title']) ?></strong>
+                                            <div style="font-size:12px; color:var(--muted); max-width:320px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                                                <?= htmlspecialchars($m['content']) ?>
+                                            </div>
+                                        </td>
+                                        <td style="font-size:12px;">
+                                            <?= !empty($m['changelog']) ? '📦 Changelog inclus' : '' ?>
+                                            <?= (!empty($m['changelog']) && !empty($m['action_notes'])) ? '<br>' : '' ?>
+                                            <?= !empty($m['action_notes']) ? '📋 Consignes incluses' : '' ?>
+                                            <?= (empty($m['changelog']) && empty($m['action_notes'])) ? '<span style="color:var(--muted);">-</span>' : '' ?>
+                                        </td>
+                                        <td style="text-align:right; white-space:nowrap;">
+                                            <div style="display:inline-flex; gap:6px;">
+                                                <!-- Toggle Active Form -->
+                                                <form method="post" style="display:inline;">
+                                                    <input type="hidden" name="form_type" value="toggle_reseller_message">
+                                                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                                                    <input type="hidden" name="message_id" value="<?= (int)$m['id'] ?>">
+                                                    <button type="submit" class="btn btn-sm btn-secondary" title="Activer / Masquer">
+                                                        <?= (int)$m['is_active'] === 1 ? '⏸️ Masquer' : '▶️ Activer' ?>
+                                                    </button>
+                                                </form>
+
+                                                <!-- Edit Button -->
+                                                <button type="button" class="btn btn-sm btn-secondary" onclick='openEditMessageModal(<?= json_encode($m, JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_UNICODE) ?>)'>
+                                                    ✏️ Modifier
+                                                </button>
+
+                                                <!-- Delete Form -->
+                                                <form method="post" style="display:inline;" onsubmit="return confirm('Supprimer définitivement ce message revendeur ?');">
+                                                    <input type="hidden" name="form_type" value="delete_reseller_message">
+                                                    <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                                                    <input type="hidden" name="message_id" value="<?= (int)$m['id'] ?>">
+                                                    <button type="submit" class="btn btn-sm btn-danger">
+                                                        🗑️
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Edit Message Modal -->
+            <div id="editMessageModal" class="modal">
+                <div class="modal-content" style="max-width:650px;">
+                    <button type="button" class="modal-close" onclick="closeEditMessageModal()">&times;</button>
+                    <h2 style="margin-bottom:18px;">✏️ Modifier l'Annonce Revendeurs</h2>
+                    <form method="post">
+                        <input type="hidden" name="form_type" value="edit_reseller_message">
+                        <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
+                        <input type="hidden" id="edit_msg_id" name="message_id" value="">
+
+                        <div class="form-group">
+                            <label for="edit_msg_type">Type de Message</label>
+                            <select id="edit_msg_type" name="msg_type">
+                                <option value="update">🚀 Mise à jour / Release</option>
+                                <option value="action">⚠️ Consignes d'action</option>
+                                <option value="notice">📢 Annonce Générale</option>
+                                <option value="alert">🚨 Alerte Urgente</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit_msg_badge">Badge d'en-tête</label>
+                            <input type="text" id="edit_msg_badge" name="msg_badge" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit_msg_title">Titre de l'Annonce</label>
+                            <input type="text" id="edit_msg_title" name="msg_title" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit_msg_content">Contenu Principal</label>
+                            <textarea id="edit_msg_content" name="msg_content" rows="4" required></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit_msg_changelog">Changelog &amp; Nouveautés (Optionnel)</label>
+                            <textarea id="edit_msg_changelog" name="msg_changelog" rows="4"></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="edit_msg_action_notes">Consignes / Directives aux Revendeurs ("faire ceci ou cela")</label>
+                            <textarea id="edit_msg_action_notes" name="msg_action_notes" rows="4"></textarea>
+                        </div>
+
+                        <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                            <input type="checkbox" id="edit_msg_is_active" name="msg_is_active" value="1" style="width:auto;">
+                            <label for="edit_msg_is_active" style="margin:0; cursor:pointer; font-weight:700;">
+                                Annonce active et visible sur l'accueil des revendeurs
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn" style="width:100%; padding:12px; font-weight:800;">
+                            Enregistrer les Modifications
+                        </button>
+                    </form>
+                </div>
+            </div>
+
         <?php elseif ($activeTab === 'settings' && $role === 'admin'): ?>
             <!-- Settings & Configuration (All Tabs) -->
             <form method="post">
@@ -1959,5 +2541,67 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+
+<script>
+function copyDownloaderCode(code, btn) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(code).then(() => {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✅ Code 7454701 copié !';
+            btn.style.borderColor = '#10b981';
+            btn.style.color = '#10b981';
+            setTimeout(() => {
+                btn.innerHTML = orig;
+                btn.style.borderColor = '';
+                btn.style.color = '';
+            }, 2200);
+        });
+    }
+}
+
+function copyDirectLink(url, btn) {
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '✅ Lien direct copié !';
+            btn.style.borderColor = '#10b981';
+            btn.style.color = '#10b981';
+            setTimeout(() => {
+                btn.innerHTML = orig;
+                btn.style.borderColor = '';
+                btn.style.color = '';
+            }, 2200);
+        });
+    }
+}
+
+function updateDefaultBadge(type) {
+    const badgeInput = document.getElementById('msg_badge');
+    if (!badgeInput) return;
+    switch(type) {
+        case 'update': badgeInput.value = '🚀 Mise à jour v1.2.5 PRO'; break;
+        case 'action': badgeInput.value = '⚠️ Consignes d\'action'; break;
+        case 'alert':  badgeInput.value = '🚨 Alerte Importante'; break;
+        default:       badgeInput.value = '📢 Annonce Revendeurs'; break;
+    }
+}
+
+function openEditMessageModal(m) {
+    document.getElementById('edit_msg_id').value = m.id;
+    document.getElementById('edit_msg_type').value = m.type;
+    document.getElementById('edit_msg_badge').value = m.badge;
+    document.getElementById('edit_msg_title').value = m.title;
+    document.getElementById('edit_msg_content').value = m.content;
+    document.getElementById('edit_msg_changelog').value = m.changelog || '';
+    document.getElementById('edit_msg_action_notes').value = m.action_notes || '';
+    document.getElementById('edit_msg_is_active').checked = (parseInt(m.is_active) === 1);
+    document.getElementById('editMessageModal').classList.add('open');
+}
+
+function closeEditMessageModal() {
+    document.getElementById('editMessageModal').classList.remove('open');
+}
+</script>
+
 </body>
 </html>
