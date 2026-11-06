@@ -186,6 +186,9 @@ function handleGitPull(): void {
         }
     }
 
+    if (function_exists('opcache_reset')) {
+        @opcache_reset();
+    }
     // Auto-update app_version setting to latest release
     DB::setSetting('app_version', '1.2.7');
 
