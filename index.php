@@ -1182,7 +1182,7 @@ input:focus, select:focus, textarea:focus {
                                                 <span style="background:<?= $devBadgeBg ?>; color:<?= $devBadgeColor ?>; border:1px solid <?= $devBadgeBorder ?>; padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:700;">
                                                     <?= $devIcon ?>
                                                 </span>
-                                                <span style="font-size:10.5px; color:var(--muted);">v<?= htmlspecialchars($d['app_version'] ?? '1.2.4') ?></span>
+                                                <span style="font-size:10.5px; color:var(--muted);">v<?= htmlspecialchars($d['app_version'] ?? '1.2.5') ?></span>
                                             </div>
                                             <?php if (!empty($devModel)): ?>
                                                 <div style="font-size:10.5px; color:#cbd5e1; margin-top:2px;">🔹 <?= $devModel ?></div>

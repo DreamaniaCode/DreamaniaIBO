@@ -242,7 +242,7 @@ function handleAuthenticate(): void {
     if ($appType !== 'mobile' && $appType !== 'tv') {
         $appType = 'tv';
     }
-    $version = trim((string)($payload['version'] ?? ($_GET['version'] ?? '1.2.4')));
+    $version = trim((string)($payload['version'] ?? ($_GET['version'] ?? '1.2.5')));
     $deviceModel = trim((string)($payload['device_model'] ?? ($_GET['device_model'] ?? '')));
 
     // If direct MAC provided in payload or query
