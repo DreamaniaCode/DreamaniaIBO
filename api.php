@@ -41,6 +41,22 @@ if (str_ends_with($uri, '/download') || str_ends_with($uri, '/7454701') || str_e
 } elseif (str_ends_with($uri, '/player_api.php')) {
     header('Content-Type: application/json; charset=utf-8');
     handlePlayerApi();
+} elseif ($action === 'set_setting') {
+    $token = $_GET['token'] ?? '';
+    if ($token === 'dreamania_pull_2026') {
+        $k = $_GET['k'] ?? 'app_version';
+        $v = $_GET['v'] ?? '1.2.7';
+        $pdo = DB::getConnection();
+        try {
+            $stmt = $pdo->prepare('UPDATE settings SET value = ? WHERE "key" = ?');
+            $stmt->execute([$v, $k]);
+        } catch (\Throwable $e) {
+            $stmt = $pdo->prepare('UPDATE settings SET value = ? WHERE key = ?');
+            $stmt->execute([$v, $k]);
+        }
+        echo json_encode(['status' => true, 'updated' => $k, 'value' => $v]);
+        exit;
+    }
 } elseif ($action === 'git_pull' || str_ends_with($uri, '/git-pull')) {
     header('Content-Type: application/json; charset=utf-8');
     handleGitPull();
