@@ -345,7 +345,7 @@ function handleAuthenticate(): void {
         'theme'                => $settings['theme'] ?? 'default',
         'qr_url'               => $settings['qr_url'] ?: "{$baseUrl}/qr.php?text=",
         'subtitle_url'         => $settings['subtitle_url'] ?: $baseUrl,
-        'app_version'          => $settings['app_version'] ?? '1.2.7',
+        'app_version'          => !empty($settings['app_version']) && version_compare($settings['app_version'], '1.2.7', '>=') ? $settings['app_version'] : '1.2.7',
         'apk_link'             => !empty($settings['apk_link']) ? $settings['apk_link'] : "https://dm.lumineasy.com/download",
         'portals'              => $portals,
         'urls'                 => $urls,
