@@ -186,6 +186,9 @@ function handleGitPull(): void {
         }
     }
 
+    // Auto-update app_version setting to latest release
+    DB::setSetting('app_version', '1.2.7');
+
     echo json_encode([
         'status' => true,
         'message' => 'Sync executed successfully',
