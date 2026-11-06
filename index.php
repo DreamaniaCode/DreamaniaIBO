@@ -315,7 +315,43 @@ if ($isLogged && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                     if (move_uploaded_file($_FILES['apk_file']['tmp_name'], $dest)) {
                         @copy($dest, __DIR__ . '/DreamaniaPlayer.apk');
                         $sizeMb = round(filesize($dest) / (1024 * 1024), 2);
-                        $msg = "APK file updated successfully! ({$sizeMb} MB)";
+
+                        // Parse or read version specified by admin or filename
+                        $newVer = trim((string)($_POST['apk_version'] ?? ''));
+                        if ($newVer === '') {
+                            $origName = $_FILES['apk_file']['name'] ?? '';
+                            if (preg_match('/(?:v)?(\d+\.\d+(?:\.\d+)?)/i', $origName, $m)) {
+                                $newVer = $m[1];
+                            }
+                        }
+                        if ($newVer !== '') {
+                            $newVer = ltrim($newVer, 'vV');
+                            DB::setSetting('app_version', $newVer);
+                            $settings['app_version'] = $newVer;
+                        }
+
+                        // Also optionally update the reseller broadcast announcement if requested
+                        $autoBroadcast = !empty($_POST['auto_update_broadcast']);
+                        if ($autoBroadcast && $newVer !== '') {
+                            $formattedVer = 'v' . $newVer . ' PRO';
+                            $downCode = $settings['downloader_code'] ?? '7454701';
+                            DB::addResellerMessage(
+                                'update',
+                                "🚀 Mise à jour {$formattedVer}",
+                                "Dreamania Player {$formattedVer} est disponible !",
+                                "La nouvelle mise à jour {$formattedVer} de Dreamania Player a été déployée avec succès en production. Vos clients peuvent dès à présent la télécharger pour bénéficier des dernières améliorations de stabilité et de performance.",
+                                "- Mise à jour {$formattedVer} disponible au téléchargement
+- Optimisations globales de fluidité, lecteur vidéo et stabilité
+- Prise en charge enrichie des appareils Smart TV et Mobiles",
+                                "- Informez vos clients d'installer la mise à jour {$formattedVer} via Downloader (code {$downCode}).
+- Pour les nouveaux appareils, veillez à toujours installer cette dernière version.
+- Rechargez vos crédits si nécessaire pour activer de nouveaux comptes clients instantanément."
+                            );
+                            $latestResellerMessage = DB::getLatestResellerMessage();
+                        }
+
+                        $verDisplay = $newVer !== '' ? " (v{$newVer} PRO)" : "";
+                        $msg = "Fichier APK{$verDisplay} mis à jour et déployé avec succès ! ({$sizeMb} MB)";
                         $msgType = "success";
                     } else {
                         throw new Exception("Could not move uploaded APK to data/app.apk.");
@@ -326,7 +362,7 @@ if ($isLogged && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
             // 10. Settings Update (Admin Only)
             elseif ($formType === 'update_settings' && $role === 'admin') {
                 $settingsToUpdate = [
-                    'admin_password', 'app_name', 'note_title', 'note_content',
+                    'admin_password', 'app_name', 'app_version', 'note_title', 'note_content',
                     'trial_days', 'default_expiry', 'price', 'apk_link',
                     'paypal_email', 'paypal_me_link', 'rib_bank_name', 'rib_account_name',
                     'rib_number', 'rib_swift', 'whatsapp_number',
@@ -1071,6 +1107,28 @@ input:focus, select:focus, textarea:focus {
     height: 4px;
     background: linear-gradient(90deg, #8b5cf6, #06b6d4, #f59e0b, #ec4899);
 }
+.reseller-broadcast-card.is-collapsed {
+    padding: 14px 24px;
+    margin-bottom: 18px;
+    border-color: rgba(139, 92, 246, 0.28);
+    background: rgba(18, 14, 33, 0.75);
+}
+.reseller-broadcast-card.is-collapsed .broadcast-card-body {
+    display: none !important;
+}
+.reseller-broadcast-card.is-collapsed .broadcast-top-row {
+    margin-bottom: 0 !important;
+}
+.reseller-broadcast-card.is-collapsed #broadcastCollapsedTitle {
+    display: inline-block !important;
+}
+.reseller-broadcast-card.is-dismissed {
+    display: none !important;
+}
+.btn-broadcast-ctrl:hover {
+    filter: brightness(1.25);
+    transform: translateY(-1px);
+}
 .broadcast-top-row {
     display: flex;
     align-items: center;
@@ -1329,73 +1387,113 @@ input:focus, select:focus, textarea:focus {
     <?php else: ?>
         <!-- Reseller Latest Message & Update Announcement Banner -->
         <?php if ($latestResellerMessage && ($role === 'reseller' || $activeTab === 'playlists')): ?>
-            <div class="reseller-broadcast-card card-3d">
+            <?php 
+                $currAppVer = !empty($settings['app_version']) ? ('v' . ltrim($settings['app_version'], 'v') . ' PRO') : 'v1.2.6 PRO';
+                $currDownloaderCode = $settings['downloader_code'] ?? '7454701';
+                $msgId = (int)($latestResellerMessage['id'] ?? 0);
+            ?>
+
+            <!-- Dismissed Notification Recovery Pill -->
+            <div id="broadcastDismissedPill" style="display:none; margin-bottom:20px; background:linear-gradient(135deg, rgba(139,92,246,0.15), rgba(16,185,129,0.1)); border:1px dashed rgba(139,92,246,0.4); border-radius:14px; padding:10px 18px; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="font-size:18px;">📢</span>
+                    <span style="font-size:13px; color:#cbd5e1;">
+                        Notification revendeur masquée : <strong style="color:#fff;"><?= htmlspecialchars($latestResellerMessage['title']) ?></strong>
+                    </span>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <button type="button" onclick="restoreBroadcastCard()" style="background:rgba(139,92,246,0.25); border:1px solid rgba(139,92,246,0.5); color:#c4b5fd; border-radius:8px; padding:5px 14px; font-size:12px; font-weight:700; cursor:pointer;">
+                        👁️ Réafficher la notification
+                    </button>
+                </div>
+            </div>
+
+            <!-- Full / Collapsible Broadcast Card -->
+            <div class="reseller-broadcast-card card-3d" id="resellerBroadcastCard" data-msg-id="<?= $msgId ?>">
                 <div class="broadcast-top-row">
-                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap; flex:1; min-width:260px;">
                         <span class="broadcast-badge type-<?= htmlspecialchars($latestResellerMessage['type'] ?? 'update') ?>">
                             <?= htmlspecialchars($latestResellerMessage['badge'] ?? '📢 Flash Info') ?>
                         </span>
                         <?php if ($role === 'admin'): ?>
                             <span style="background:rgba(255,255,255,0.08); color:var(--muted); font-size:11px; padding:2px 8px; border-radius:6px; font-weight:700;">
-                                👁️ Aperçu Revendeur
+                                🛡️ Aperçu Revendeur
                             </span>
                             <a href="?tab=messages" style="color:var(--accent); font-size:11.5px; font-weight:700; text-decoration:none;">
-                                ✏️ Modifier / Gérer les annonces
+                                ✏️ Gérer les annonces
                             </a>
                         <?php endif; ?>
+
+                        <!-- Title shown inline only when collapsed -->
+                        <span id="broadcastCollapsedTitle" style="display:none; color:#ffffff; font-size:14px; font-weight:700; max-width:440px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                            <?= htmlspecialchars($latestResellerMessage['title']) ?>
+                        </span>
                     </div>
-                    <div class="broadcast-date">
-                        🕒 Publié le <?= htmlspecialchars(date('d/m/Y H:i', strtotime($latestResellerMessage['created_at'] ?? 'now'))) ?>
-                    </div>
-                </div>
 
-                <div class="broadcast-title">
-                    <?= htmlspecialchars($latestResellerMessage['title']) ?>
-                </div>
-
-                <div class="broadcast-content">
-                    <?= nl2br(htmlspecialchars($latestResellerMessage['content'])) ?>
-                </div>
-
-                <?php if (!empty($latestResellerMessage['changelog'])): ?>
-                    <div class="broadcast-section-box changelog-box">
-                        <div class="section-box-header purple">
-                            <span>📦 Changelog &amp; Nouveautés de la mise à jour</span>
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <div class="broadcast-date" id="broadcastDateWrap">
+                            🕒 Publié le <?= htmlspecialchars(date('d/m/Y H:i', strtotime($latestResellerMessage['created_at'] ?? 'now'))) ?>
                         </div>
-                        <ul class="broadcast-list changelog">
-                            <?php foreach (explode("\n", trim($latestResellerMessage['changelog'])) as $line): ?>
-                                <?php $line = trim($line); if (empty($line)) continue; ?>
-                                <li><?= htmlspecialchars(ltrim($line, "•- \t")) ?></li>
-                            <?php endforeach; ?>
-                        </ul>
-
-                        <div class="broadcast-quick-actions">
-                            <a href="https://dm.lumineasy.com/download" class="btn btn-sm" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff; text-decoration: none; padding: 7px 14px; font-weight: 700; border-radius: 8px;">
-                                ⬇️ Télécharger APK v1.2.6 PRO
-                            </a>
-                            <button type="button" class="btn-quick-copy" onclick="copyDownloaderCode('7454701', this)">
-                                📋 Code Downloader : <strong>7454701</strong>
+                        <div style="display:flex; align-items:center; gap:6px;">
+                            <button type="button" id="btnToggleBroadcast" onclick="toggleBroadcastCard()" title="Réduire ou Agrandir la notification" class="btn-broadcast-ctrl" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); color:#cbd5e1; border-radius:8px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.2s ease;">
+                                <span id="broadcastToggleIcon">➖</span> <span id="broadcastToggleText">Réduire</span>
                             </button>
-                            <button type="button" class="btn-quick-copy" onclick="copyDirectLink('https://dm.lumineasy.com/download', this)">
-                                🔗 Copier Lien Direct
+                            <button type="button" id="btnDismissBroadcast" onclick="dismissBroadcastCard()" title="Fermer et masquer cette notification" class="btn-broadcast-ctrl" style="background:rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.3); color:#fca5a5; border-radius:8px; padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:4px; transition:all 0.2s ease;">
+                                <span>✖</span> <span>Masquer</span>
                             </button>
                         </div>
                     </div>
-                <?php endif; ?>
+                </div>
 
-                <?php if (!empty($latestResellerMessage['action_notes'])): ?>
-                    <div class="broadcast-section-box action-box">
-                        <div class="section-box-header gold">
-                            <span>📋 Directives &amp; Consignes de l'administrateur aux revendeurs</span>
-                        </div>
-                        <ul class="broadcast-list action">
-                            <?php foreach (explode("\n", trim($latestResellerMessage['action_notes'])) as $line): ?>
-                                <?php $line = trim($line); if (empty($line)) continue; ?>
-                                <li><?= htmlspecialchars(ltrim($line, "•- \t")) ?></li>
-                            <?php endforeach; ?>
-                        </ul>
+                <div id="broadcastCardBody" class="broadcast-card-body">
+                    <div class="broadcast-title">
+                        <?= htmlspecialchars($latestResellerMessage['title']) ?>
                     </div>
-                <?php endif; ?>
+
+                    <div class="broadcast-content">
+                        <?= nl2br(htmlspecialchars($latestResellerMessage['content'])) ?>
+                    </div>
+
+                    <?php if (!empty($latestResellerMessage['changelog'])): ?>
+                        <div class="broadcast-section-box changelog-box">
+                            <div class="section-box-header purple">
+                                <span>🚀 Changelog &amp; Nouveautés de la mise à jour</span>
+                            </div>
+                            <ul class="broadcast-list changelog">
+                                <?php foreach (explode("\n", trim($latestResellerMessage['changelog'])) as $line): ?>
+                                    <?php $line = trim($line); if (empty($line)) continue; ?>
+                                    <li><?= htmlspecialchars(ltrim($line, "•- \t")) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+
+                            <div class="broadcast-quick-actions">
+                                <a href="https://dm.lumineasy.com/download" class="btn btn-sm" style="background: linear-gradient(135deg, #8b5cf6, #6366f1); color: #fff; text-decoration: none; padding: 7px 14px; font-weight: 700; border-radius: 8px;">
+                                    🚀 Télécharger APK <?= htmlspecialchars($currAppVer) ?>
+                                </a>
+                                <button type="button" class="btn-quick-copy" onclick="copyDownloaderCode('<?= htmlspecialchars($currDownloaderCode) ?>', this)">
+                                    📥 Code Downloader : <strong><?= htmlspecialchars($currDownloaderCode) ?></strong>
+                                </button>
+                                <button type="button" class="btn-quick-copy" onclick="copyDirectLink('https://dm.lumineasy.com/download', this)">
+                                    🔗 Copier Lien Direct
+                                </button>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <?php if (!empty($latestResellerMessage['action_notes'])): ?>
+                        <div class="broadcast-section-box action-box">
+                            <div class="section-box-header gold">
+                                <span>⚠️ Directives &amp; Consignes de l'administrateur aux revendeurs</span>
+                            </div>
+                            <ul class="broadcast-list action">
+                                <?php foreach (explode("\n", trim($latestResellerMessage['action_notes'])) as $line): ?>
+                                    <?php $line = trim($line); if (empty($line)) continue; ?>
+                                    <li><?= htmlspecialchars(ltrim($line, "•- \t")) ?></li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </div>
         <?php endif; ?>
 
@@ -2619,6 +2717,13 @@ input:focus, select:focus, textarea:focus {
                             <input type="text" id="app_name" name="app_name" value="<?= htmlspecialchars($settings['app_name'] ?? 'Dreamania Player') ?>" required>
                         </div>
                         <div class="form-group">
+                            <label for="app_version">Version Active de l'Application (ex: 1.2.6)</label>
+                            <input type="text" id="app_version" name="app_version" value="<?= htmlspecialchars($settings['app_version'] ?? '1.2.6') ?>" placeholder="1.2.6">
+                            <small style="color:var(--muted); font-size:11.5px; display:block; margin-top:4px;">
+                                Version officielle diffusée sur le portail revendeur, le bouton de téléchargement et l'accueil.
+                            </small>
+                        </div>
+                        <div class="form-group">
                             <label for="trial_days">Default Trial Duration (Days)</label>
                             <input type="number" id="trial_days" name="trial_days" value="<?= htmlspecialchars($settings['trial_days'] ?? '7') ?>" min="1">
                         </div>
@@ -2753,29 +2858,77 @@ input:focus, select:focus, textarea:focus {
             </form>
 
             <div class="card" style="margin-top:20px;">
-                <h2>📲 Application APK File</h2>
-                <div style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 14px 18px; margin-bottom: 16px; display: flex; align-items: center; gap: 14px;">
-                    <span style="font-size: 26px;">🔥</span>
-                    <div>
-                        <div style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: #fbbf24;">Downloader App Short Code</div>
-                        <div style="font-size: 14px; color: #fff; margin-top: 2px;">
-                            Users can install on Fire TV Stick &amp; Android TV by entering code: <strong style="font-family: 'JetBrains Mono', monospace; font-size: 18px; color: #fbbf24; letter-spacing: 1.5px;"><?= htmlspecialchars($settings['downloader_code'] ?? '7454701') ?></strong>
+                <h2>📦 Gestionnaire &amp; Déploiement du Fichier APK Client</h2>
+
+                <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:14px; margin-bottom:18px;">
+                    <div style="background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.35); border-radius:12px; padding:14px;">
+                        <div style="font-size:11px; text-transform:uppercase; color:#c4b5fd; font-weight:800;">Version Active Enregistrée</div>
+                        <div style="font-size:20px; font-weight:800; color:#fff; margin-top:4px;">
+                            v<?= htmlspecialchars($settings['app_version'] ?? '1.2.6') ?> PRO
+                        </div>
+                    </div>
+                    <div style="background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.35); border-radius:12px; padding:14px;">
+                        <div style="font-size:11px; text-transform:uppercase; color:#67e8f9; font-weight:800;">Fichier sur le Serveur</div>
+                        <div style="font-size:15px; font-weight:700; color:#fff; margin-top:4px;">
+                            <?= $apkFileExists ? round(filesize($apkPath)/(1024*1024), 2) . ' MB' : '<span style="color:#ef4444;">Non trouvé</span>' ?>
+                            <?php if ($apkFileExists): ?>
+                                <span style="font-size:11px; color:var(--muted); display:block; font-weight:normal; margin-top:2px;">
+                                    Modifié le <?= date('d/m/Y H:i', filemtime($apkPath)) ?>
+                                </span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div style="background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.35); border-radius:12px; padding:14px;">
+                        <div style="font-size:11px; text-transform:uppercase; color:#fbbf24; font-weight:800;">Code Downloader TV</div>
+                        <div style="font-size:20px; font-weight:900; color:#fbbf24; font-family:'JetBrains Mono', monospace; margin-top:4px;">
+                            <?= htmlspecialchars($settings['downloader_code'] ?? '7454701') ?>
                         </div>
                     </div>
                 </div>
+
+                <div style="background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px; color: var(--muted); display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;">
+                    <div>
+                        Lien direct de téléchargement : <a href="https://dm.lumineasy.com/download" target="_blank" style="color:var(--accent); font-weight:700;">https://dm.lumineasy.com/download</a>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="copyDirectLink('https://dm.lumineasy.com/download', this)">
+                        📋 Copier le lien
+                    </button>
+                </div>
+
+                <h3 style="font-size:16px; margin-bottom:12px; color:#fff;">Uploader une Nouvelle Version APK</h3>
                 <p style="color:var(--muted); font-size:13px; margin-bottom:16px;">
-                    Upload or replace the client APK served at <code>/download</code>.
+                    Sélectionnez le nouveau fichier APK à déployer. Indiquez le numéro de version pour actualiser automatiquement l'affichage sur la page d'accueil, le tableau de bord revendeur et les alertes de mise à jour.
                 </p>
+
                 <form method="post" enctype="multipart/form-data">
                     <input type="hidden" name="form_type" value="upload_apk_file">
                     <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
 
-                    <div class="form-group">
-                        <label for="apk_file">Select APK File</label>
-                        <input type="file" id="apk_file" name="apk_file" accept=".apk" required>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="apk_version">Numéro de Version de la Mise à Jour *</label>
+                            <input type="text" id="apk_version" name="apk_version" value="<?= htmlspecialchars($settings['app_version'] ?? '1.2.6') ?>" required placeholder="ex: 1.2.6, 1.2.7 ou 1.3.0">
+                            <small style="color:var(--muted); font-size:11.5px; display:block; margin-top:4px;">
+                                Cette version sera immédiatement enregistrée et diffusée aux revendeurs et clients.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="apk_file">Fichier APK (.apk) *</label>
+                            <input type="file" id="apk_file" name="apk_file" accept=".apk" required style="padding:8px 12px; background:rgba(0,0,0,0.25); border-radius:8px;">
+                        </div>
                     </div>
 
-                    <button type="submit" class="btn btn-secondary" style="width:100%;">Upload &amp; Replace APK</button>
+                    <div style="margin-bottom:18px; padding:12px 14px; background:rgba(139,92,246,0.08); border:1px solid rgba(139,92,246,0.25); border-radius:10px;">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer; margin:0; font-size:13px; color:#e2e8f0;">
+                            <input type="checkbox" id="auto_update_broadcast" name="auto_update_broadcast" value="1" checked style="width:18px; height:18px; accent-color:#8b5cf6;">
+                            <span><strong>Actualiser automatiquement l'annonce revendeur</strong> avec ce numéro de version et les liens de téléchargement</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn" style="width:100%; padding:14px; font-weight:700; font-size:15px; background:linear-gradient(135deg, #8b5cf6, #06b6d4);">
+                        🚀 Uploader, Déployer et Mettre à Jour la Version APK
+                    </button>
                 </form>
             </div>
             </div>
@@ -2910,6 +3063,78 @@ function closeEditAppNotifModal() {
 function closeEditMessageModal() {
     document.getElementById('editMessageModal').classList.remove('open');
 }
+
+// Reseller Notification Collapse & Dismiss Management
+function initBroadcastCard() {
+    const card = document.getElementById('resellerBroadcastCard');
+    const pill = document.getElementById('broadcastDismissedPill');
+    if (!card) return;
+    const msgId = card.getAttribute('data-msg-id') || '0';
+    if (!msgId || msgId === '0') return;
+
+    const dismissedKey = 'broadcast_dismissed_' + msgId;
+    const collapsedKey = 'broadcast_collapsed_' + msgId;
+
+    if (localStorage.getItem(dismissedKey) === '1') {
+        card.classList.add('is-dismissed');
+        if (pill) pill.style.display = 'flex';
+    } else if (localStorage.getItem(collapsedKey) === '1') {
+        applyBroadcastCollapsed(true);
+    }
+}
+
+function toggleBroadcastCard() {
+    const card = document.getElementById('resellerBroadcastCard');
+    if (!card) return;
+    const isNowCollapsed = !card.classList.contains('is-collapsed');
+    applyBroadcastCollapsed(isNowCollapsed);
+    const msgId = card.getAttribute('data-msg-id') || '0';
+    if (msgId && msgId !== '0') {
+        localStorage.setItem('broadcast_collapsed_' + msgId, isNowCollapsed ? '1' : '0');
+    }
+}
+
+function applyBroadcastCollapsed(collapsed) {
+    const card = document.getElementById('resellerBroadcastCard');
+    const icon = document.getElementById('broadcastToggleIcon');
+    const text = document.getElementById('broadcastToggleText');
+    if (!card) return;
+    if (collapsed) {
+        card.classList.add('is-collapsed');
+        if (icon) icon.textContent = '➕';
+        if (text) text.textContent = 'Agrandir';
+    } else {
+        card.classList.remove('is-collapsed');
+        if (icon) icon.textContent = '➖';
+        if (text) text.textContent = 'Réduire';
+    }
+}
+
+function dismissBroadcastCard() {
+    const card = document.getElementById('resellerBroadcastCard');
+    const pill = document.getElementById('broadcastDismissedPill');
+    if (!card) return;
+    card.classList.add('is-dismissed');
+    if (pill) pill.style.display = 'flex';
+    const msgId = card.getAttribute('data-msg-id') || '0';
+    if (msgId && msgId !== '0') {
+        localStorage.setItem('broadcast_dismissed_' + msgId, '1');
+    }
+}
+
+function restoreBroadcastCard() {
+    const card = document.getElementById('resellerBroadcastCard');
+    const pill = document.getElementById('broadcastDismissedPill');
+    if (!card) return;
+    card.classList.remove('is-dismissed');
+    if (pill) pill.style.display = 'none';
+    const msgId = card.getAttribute('data-msg-id') || '0';
+    if (msgId && msgId !== '0') {
+        localStorage.removeItem('broadcast_dismissed_' + msgId);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', initBroadcastCard);
 </script>
 
 </body>
