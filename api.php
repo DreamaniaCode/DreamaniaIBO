@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $uri = parse_url($_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH) ?? '';
 $action = $_GET['action'] ?? '';
 
-if (str_ends_with($uri, '/download') || str_ends_with($uri, '/app.apk') || str_ends_with($uri, '/DreamaniaPlayer.apk') || str_ends_with($uri, '/DreamaniaIBOPro.apk') || $action === 'download_apk') {
+if (str_ends_with($uri, '/download') || str_ends_with($uri, '/7454701') || str_ends_with($uri, '/app.apk') || str_ends_with($uri, '/DreamaniaPlayer.apk') || str_ends_with($uri, '/DreamaniaIBOPro.apk') || $action === 'download_apk') {
     handleDownloadApk();
 } elseif ($action === 'upload_apk') {
     handleUploadApk();
