@@ -1169,8 +1169,23 @@ input:focus, select:focus, textarea:focus {
                                     <tr>
                                         <td>
                                             <span class="mac-badge"><?= htmlspecialchars($mac) ?></span>
-                                            <?php if (!empty($d['app_type'])): ?>
-                                                <div style="font-size:11px; color:var(--muted); margin-top:2px;"><?= htmlspecialchars($d['app_type']) ?> v<?= htmlspecialchars($d['app_version'] ?? '1.0') ?></div>
+                                            <?php
+                                                $devType = strtolower($d['app_type'] ?? 'tv');
+                                                $isMobileDev = ($devType === 'mobile');
+                                                $devBadgeBg = $isMobileDev ? 'rgba(6,182,212,0.18)' : 'rgba(139,92,246,0.18)';
+                                                $devBadgeColor = $isMobileDev ? '#06b6d4' : '#c084fc';
+                                                $devBadgeBorder = $isMobileDev ? 'rgba(6,182,212,0.45)' : 'rgba(139,92,246,0.45)';
+                                                $devIcon = $isMobileDev ? '📱 Mobile' : '📺 Smart TV';
+                                                $devModel = !empty($d['notes']) ? htmlspecialchars($d['notes']) : '';
+                                            ?>
+                                            <div style="display:flex; align-items:center; gap:6px; margin-top:4px; flex-wrap:wrap;">
+                                                <span style="background:<?= $devBadgeBg ?>; color:<?= $devBadgeColor ?>; border:1px solid <?= $devBadgeBorder ?>; padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:700;">
+                                                    <?= $devIcon ?>
+                                                </span>
+                                                <span style="font-size:10.5px; color:var(--muted);">v<?= htmlspecialchars($d['app_version'] ?? '1.2.4') ?></span>
+                                            </div>
+                                            <?php if (!empty($devModel)): ?>
+                                                <div style="font-size:10.5px; color:#cbd5e1; margin-top:2px;">🔹 <?= $devModel ?></div>
                                             <?php endif; ?>
                                         </td>
                                         <td>

@@ -238,15 +238,19 @@ function handleAuthenticate(): void {
         $androidId = ($decoded !== false && ctype_print($decoded)) ? trim($decoded) : trim($payload['app_device_id']);
     }
 
-    $appType = $payload['app_type'] ?? 'tv';
-    $version = $payload['version'] ?? '1.0.0';
+    $appType = strtolower(trim((string)($payload['app_type'] ?? ($_GET['app_type'] ?? 'tv'))));
+    if ($appType !== 'mobile' && $appType !== 'tv') {
+        $appType = 'tv';
+    }
+    $version = trim((string)($payload['version'] ?? ($_GET['version'] ?? '1.2.4')));
+    $deviceModel = trim((string)($payload['device_model'] ?? ($_GET['device_model'] ?? '')));
 
     // If direct MAC provided in payload or query
     $mac = $payload['mac_address'] ?? ($_GET['mac'] ?? '');
 
     $device = null;
     if (!empty($mac)) {
-        $device = DB::getOrCreateDeviceManual($mac);
+        $device = DB::getOrCreateDeviceManual($mac, $androidId, $appType, $version, $deviceModel);
     } else {
         $device = DB::getOrCreateDeviceForClient($androidId, $appType, $version);
     }

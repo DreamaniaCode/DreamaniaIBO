@@ -91,12 +91,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $pUrl = trim($_POST['url'] ?? '');
                 $isProtected = !empty($_POST['is_protected']);
 
-                if (empty($pUrl) || !filter_var($pUrl, FILTER_VALIDATE_URL)) {
+                if (!empty($pUrl) && !str_starts_with(strtolower($pUrl), 'http://') && !str_starts_with(strtolower($pUrl), 'https://')) {
+                    $pUrl = 'http://' . $pUrl;
+                }
+
+                if (empty($pUrl) || strlen($pUrl) < 8) {
                     $msg = "Veuillez fournir une URL M3U/M3U8 valide.";
                     $msgType = "error";
                 } else {
                     DB::addM3uPlaylist($currentMac, $pName, $pUrl, $isProtected);
-                    $msg = "Playlist M3U ajoutée avec succès ! Rafraîchissez l'application sur votre TV.";
+                    $msg = "Playlist M3U enregistrée avec succès ! Vos chaînes sont synchronisées sur votre appareil.";
                     $msgType = "success";
                 }
             }
@@ -105,6 +109,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             elseif ($action === 'add_xtream') {
                 $pName = trim($_POST['name'] ?? 'Serveur Xtream');
                 $serverUrl = trim($_POST['server_url'] ?? '');
+                if (!empty($serverUrl) && !str_starts_with(strtolower($serverUrl), 'http://') && !str_starts_with(strtolower($serverUrl), 'https://')) {
+                    $serverUrl = 'http://' . $serverUrl;
+                }
+                $serverUrl = rtrim($serverUrl, '/');
                 $username = trim($_POST['username'] ?? '');
                 $password = trim($_POST['password'] ?? '');
                 $isProtected = !empty($_POST['is_protected']);
@@ -114,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $msgType = "error";
                 } else {
                     DB::addXtreamPlaylist($currentMac, $pName, $serverUrl, $username, $password, $isProtected);
-                    $msg = "Connexion Xtream Codes enregistrée avec succès ! Vos chaînes sont disponibles sur votre TV.";
+                    $msg = "Connexion Xtream Codes enregistrée avec succès ! Vos chaînes sont disponibles sur votre appareil.";
                     $msgType = "success";
                 }
             }

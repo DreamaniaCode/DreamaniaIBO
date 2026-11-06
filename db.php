@@ -459,7 +459,7 @@ class DB {
         return self::getOrCreateDeviceManual($mac, $androidId, $appType, $appVersion);
     }
 
-    public static function getOrCreateDeviceManual(string $mac, string $androidId = '', string $appType = 'tv', string $appVersion = '1.0.0'): array {
+    public static function getOrCreateDeviceManual(string $mac, string $androidId = '', string $appType = 'tv', string $appVersion = '1.2.4', string $deviceModel = ''): array {
         $mac = self::normalizeMac($mac);
         $pdo = self::getConnection();
 
@@ -468,8 +468,12 @@ class DB {
         $device = $stmt->fetch();
 
         if ($device) {
-            $up = $pdo->prepare("UPDATE devices SET last_seen = CURRENT_TIMESTAMP WHERE id = ?");
-            $up->execute([$device['id']]);
+            $notes = !empty($deviceModel) ? $deviceModel : ($device['notes'] ?? '');
+            $up = $pdo->prepare("UPDATE devices SET last_seen = CURRENT_TIMESTAMP, app_type = ?, app_version = ?, notes = ? WHERE id = ?");
+            $up->execute([$appType, $appVersion, $notes, $device['id']]);
+            $device['app_type'] = $appType;
+            $device['app_version'] = $appVersion;
+            $device['notes'] = $notes;
             return $device;
         }
 
@@ -477,9 +481,9 @@ class DB {
         $trialDays = (int) self::getSetting('trial_days', '7');
         $expireDate = date('Y-m-d', strtotime("+{$trialDays} days"));
 
-        $ins = $pdo->prepare("INSERT INTO devices (mac_address, device_key, android_id, app_type, app_version, expire_date, is_trial, is_paid, parent_control, status)
-                               VALUES (?, ?, ?, ?, ?, ?, 1, 0, '0000', 'active')");
-        $ins->execute([$mac, $deviceKey, $androidId, $appType, $appVersion, $expireDate]);
+        $ins = $pdo->prepare("INSERT INTO devices (mac_address, device_key, android_id, app_type, app_version, expire_date, is_trial, is_paid, parent_control, status, notes)
+                               VALUES (?, ?, ?, ?, ?, ?, 1, 0, '0000', 'active', ?)");
+        $ins->execute([$mac, $deviceKey, $androidId, $appType, $appVersion, $expireDate, $deviceModel]);
 
         $stmt = $pdo->prepare("SELECT * FROM devices WHERE mac_address = ?");
         $stmt->execute([$mac]);
