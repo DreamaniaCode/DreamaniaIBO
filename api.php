@@ -242,7 +242,7 @@ function handleAuthenticate(): void {
     if ($appType !== 'mobile' && $appType !== 'tv') {
         $appType = 'tv';
     }
-    $version = trim((string)($payload['version'] ?? ($_GET['version'] ?? '1.2.6')));
+    $version = trim((string)($payload['version'] ?? ($_GET['version'] ?? '1.2.7')));
     $deviceModel = trim((string)($payload['device_model'] ?? ($_GET['device_model'] ?? '')));
 
     // If direct MAC provided in payload or query
@@ -276,7 +276,7 @@ function handleAuthenticate(): void {
     foreach ($playlistsDb as $p) {
         $urls[] = [
             'id'           => (string)$p['id'],
-            'name'         => (string)$p['name'],
+            'name'         => !empty(trim((string)($p['name'] ?? ''))) ? trim((string)$p['name']) : ('Playlist #' . $p['id']),
             'url'          => (string)$p['url'],
             'type'         => (string)($p['type'] ?? 'm3u'),
             'username'     => (string)($p['username'] ?? ''),
@@ -342,7 +342,7 @@ function handleAuthenticate(): void {
         'theme'                => $settings['theme'] ?? 'default',
         'qr_url'               => $settings['qr_url'] ?: "{$baseUrl}/qr.php?text=",
         'subtitle_url'         => $settings['subtitle_url'] ?: $baseUrl,
-        'app_version'          => $settings['app_version'] ?? '1.2.6',
+        'app_version'          => $settings['app_version'] ?? '1.2.7',
         'apk_link'             => !empty($settings['apk_link']) ? $settings['apk_link'] : "https://dm.lumineasy.com/download",
         'portals'              => $portals,
         'urls'                 => $urls,

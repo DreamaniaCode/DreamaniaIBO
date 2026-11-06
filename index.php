@@ -412,7 +412,7 @@ if ($isLogged && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 }
                 if (empty($badge)) {
                     $badge = match ($type) {
-                        'update' => '🚀 Mise à jour v1.2.6 PRO',
+                        'update' => '🚀 Mise à jour v1.2.7 PRO',
                         'action' => "⚠️ Consignes d'action",
                         'alert'  => '🚨 Alerte Importante',
                         default  => '📢 Annonce Revendeurs'
@@ -1388,7 +1388,7 @@ input:focus, select:focus, textarea:focus {
         <!-- Reseller Latest Message & Update Announcement Banner -->
         <?php if ($latestResellerMessage && ($role === 'reseller' || $activeTab === 'playlists')): ?>
             <?php 
-                $currAppVer = !empty($settings['app_version']) ? ('v' . ltrim($settings['app_version'], 'v') . ' PRO') : 'v1.2.6 PRO';
+                $currAppVer = !empty($settings['app_version']) ? ('v' . ltrim($settings['app_version'], 'v') . ' PRO') : 'v1.2.7 PRO';
                 $currDownloaderCode = $settings['downloader_code'] ?? '7454701';
                 $msgId = (int)($latestResellerMessage['id'] ?? 0);
             ?>
@@ -1630,7 +1630,7 @@ input:focus, select:focus, textarea:focus {
                                                 <span style="background:<?= $devBadgeBg ?>; color:<?= $devBadgeColor ?>; border:1px solid <?= $devBadgeBorder ?>; padding:2px 8px; border-radius:6px; font-size:10.5px; font-weight:700;">
                                                     <?= $devIcon ?>
                                                 </span>
-                                                <span style="font-size:10.5px; color:var(--muted);">v<?= htmlspecialchars($d['app_version'] ?? '1.2.6') ?></span>
+                                                <span style="font-size:10.5px; color:var(--muted);">v<?= htmlspecialchars($d['app_version'] ?? '1.2.7') ?></span>
                                             </div>
                                             <?php if (!empty($devModel)): ?>
                                                 <div style="font-size:11px; color:#cbd5e1; margin-top:3px; font-weight:600;">🔹 <?= $devModel ?></div>
@@ -2220,12 +2220,12 @@ input:focus, select:focus, textarea:focus {
 
                         <div class="form-group">
                             <label for="msg_badge">Badge / En-tête de l'annonce</label>
-                            <input type="text" id="msg_badge" name="msg_badge" value="🚀 Mise à jour v1.2.6 PRO" required placeholder="ex: 🚀 Mise à jour v1.2.6 PRO">
+                            <input type="text" id="msg_badge" name="msg_badge" value="🚀 Mise à jour v1.2.7 PRO" required placeholder="ex: 🚀 Mise à jour v1.2.7 PRO">
                         </div>
 
                         <div class="form-group">
                             <label for="msg_title">Titre de l'Annonce</label>
-                            <input type="text" id="msg_title" name="msg_title" required placeholder="ex: Dreamania Player v1.2.6 PRO est disponible !">
+                            <input type="text" id="msg_title" name="msg_title" required placeholder="ex: Dreamania Player v1.2.7 PRO est disponible !">
                         </div>
 
                         <div class="form-group">
@@ -2244,9 +2244,9 @@ input:focus, select:focus, textarea:focus {
                         <div class="form-group">
                             <label for="msg_action_notes">
                                 📋 Consignes Spécifiques aux Revendeurs ("Faire ceci ou faire cela")
-                                <small style="display:block; color:var(--muted); font-size:11px;">Directives pratiques que vos revendeurs doivent appliquer (ex: Inviter les clients à installer la v1.2.6...)</small>
+                                <small style="display:block; color:var(--muted); font-size:11px;">Directives pratiques que vos revendeurs doivent appliquer (ex: Inviter les clients à installer la v1.2.7...)</small>
                             </label>
-                            <textarea id="msg_action_notes" name="msg_action_notes" rows="4" placeholder="• Prévenez vos clients d'installer la mise à jour v1.2.6 PRO via Downloader (code 7454701).&#10;• Rechargez vos crédits dans votre espace pour activer de nouveaux comptes."></textarea>
+                            <textarea id="msg_action_notes" name="msg_action_notes" rows="4" placeholder="• Prévenez vos clients d'installer la mise à jour v1.2.7 PRO via Downloader (code 7454701).&#10;• Rechargez vos crédits dans votre espace pour activer de nouveaux comptes."></textarea>
                         </div>
 
                         <div class="form-group" style="display:flex; align-items:center; gap:10px;">
@@ -2437,7 +2437,7 @@ input:focus, select:focus, textarea:focus {
                             <label for="notif_type">Type d'Alerte</label>
                             <select id="notif_type" name="notif_type">
                                 <option value="info">📢 Information Générale</option>
-                                <option value="update">🚀 Nouveauté &amp; Mise à Jour (v1.2.6 PRO)</option>
+                                <option value="update">🚀 Nouveauté &amp; Mise à Jour (v1.2.7 PRO)</option>
                                 <option value="alert">⚠️ Alerte &amp; Maintenance Serveur</option>
                                 <option value="promo">💎 Offre &amp; Renouvellement</option>
                             </select>
@@ -2445,7 +2445,7 @@ input:focus, select:focus, textarea:focus {
 
                         <div class="form-group">
                             <label for="notif_title">Titre de la Notification</label>
-                            <input type="text" id="notif_title" name="notif_title" required placeholder="ex: Mise à jour v1.2.6 PRO disponible !">
+                            <input type="text" id="notif_title" name="notif_title" required placeholder="ex: Mise à jour v1.2.7 PRO disponible !">
                         </div>
 
                         <div class="form-group">
@@ -2717,8 +2717,8 @@ input:focus, select:focus, textarea:focus {
                             <input type="text" id="app_name" name="app_name" value="<?= htmlspecialchars($settings['app_name'] ?? 'Dreamania Player') ?>" required>
                         </div>
                         <div class="form-group">
-                            <label for="app_version">Version Active de l'Application (ex: 1.2.6)</label>
-                            <input type="text" id="app_version" name="app_version" value="<?= htmlspecialchars($settings['app_version'] ?? '1.2.6') ?>" placeholder="1.2.6">
+                            <label for="app_version">Version Active de l'Application (ex: 1.2.7)</label>
+                            <input type="text" id="app_version" name="app_version" value="<?= htmlspecialchars($settings['app_version'] ?? '1.2.7') ?>" placeholder="1.2.7">
                             <small style="color:var(--muted); font-size:11.5px; display:block; margin-top:4px;">
                                 Version officielle diffusée sur le portail revendeur, le bouton de téléchargement et l'accueil.
                             </small>
@@ -2864,7 +2864,7 @@ input:focus, select:focus, textarea:focus {
                     <div style="background:rgba(139,92,246,0.12); border:1px solid rgba(139,92,246,0.35); border-radius:12px; padding:14px;">
                         <div style="font-size:11px; text-transform:uppercase; color:#c4b5fd; font-weight:800;">Version Active Enregistrée</div>
                         <div style="font-size:20px; font-weight:800; color:#fff; margin-top:4px;">
-                            v<?= htmlspecialchars($settings['app_version'] ?? '1.2.6') ?> PRO
+                            v<?= htmlspecialchars($settings['app_version'] ?? '1.2.7') ?> PRO
                         </div>
                     </div>
                     <div style="background:rgba(6,182,212,0.12); border:1px solid rgba(6,182,212,0.35); border-radius:12px; padding:14px;">
@@ -2907,7 +2907,7 @@ input:focus, select:focus, textarea:focus {
                     <div class="grid-2">
                         <div class="form-group">
                             <label for="apk_version">Numéro de Version de la Mise à Jour *</label>
-                            <input type="text" id="apk_version" name="apk_version" value="<?= htmlspecialchars($settings['app_version'] ?? '1.2.6') ?>" required placeholder="ex: 1.2.6, 1.2.7 ou 1.3.0">
+                            <input type="text" id="apk_version" name="apk_version" value="<?= htmlspecialchars($settings['app_version'] ?? '1.2.7') ?>" required placeholder="ex: 1.2.7, 1.2.7 ou 1.3.0">
                             <small style="color:var(--muted); font-size:11.5px; display:block; margin-top:4px;">
                                 Cette version sera immédiatement enregistrée et diffusée aux revendeurs et clients.
                             </small>
@@ -3027,7 +3027,7 @@ function updateDefaultBadge(type) {
     const badgeInput = document.getElementById('msg_badge');
     if (!badgeInput) return;
     switch(type) {
-        case 'update': badgeInput.value = '🚀 Mise à jour v1.2.6 PRO'; break;
+        case 'update': badgeInput.value = '🚀 Mise à jour v1.2.7 PRO'; break;
         case 'action': badgeInput.value = '⚠️ Consignes d\'action'; break;
         case 'alert':  badgeInput.value = '🚨 Alerte Importante'; break;
         default:       badgeInput.value = '📢 Annonce Revendeurs'; break;

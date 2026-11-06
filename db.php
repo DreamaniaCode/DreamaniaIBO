@@ -519,7 +519,7 @@ class DB {
         return self::getOrCreateDeviceManual($mac, $androidId, $appType, $appVersion);
     }
 
-    public static function getOrCreateDeviceManual(string $mac, string $androidId = '', string $appType = 'tv', string $appVersion = '1.2.6', string $deviceModel = ''): array {
+    public static function getOrCreateDeviceManual(string $mac, string $androidId = '', string $appType = 'tv', string $appVersion = '1.2.7', string $deviceModel = ''): array {
         $mac = self::normalizeMac($mac);
         $pdo = self::getConnection();
 

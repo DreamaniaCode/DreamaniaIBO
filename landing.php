@@ -17,7 +17,7 @@ $paymentConfig = method_exists('DB', 'getPaymentConfig') ? DB::getPaymentConfig(
     'whatsapp_number'  => DB::getSetting('whatsapp_number', '+212600000000'),
 ];
 $downloaderCode = $pricing['downloader_code'] ?? '7454701';
-$rawVersion = DB::getSetting('app_version', '1.2.6');
+$rawVersion = DB::getSetting('app_version', '1.2.7');
 $appVersion = 'v' . ltrim($rawVersion, 'vV') . ' PRO';
 $appReleaseDate = 'Novembre 2026';
 $officialDomain = 'https://dm.lumineasy.com';
