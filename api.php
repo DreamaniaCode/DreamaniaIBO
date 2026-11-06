@@ -169,7 +169,7 @@ function handleGitPull(): void {
         $files = ['landing.php', 'landing.html', 'device.php', 'index.php', 'credits.php', 'db.php', 'api.php', 'router.php', '.htaccess'];
         foreach ($files as $f) {
             $ctx = stream_context_create(['http' => ['timeout' => 8, 'user_agent' => 'DreamaniaSync/1.0']]);
-            $c = @file_get_contents($baseUrl . $f, false, $ctx);
+            $c = @file_get_contents($baseUrl . $f . '?_cb=' . time(), false, $ctx);
             if ($c !== false && strlen($c) > 50) {
                 @file_put_contents(__DIR__ . '/' . $f, $c);
                 $downloaded[] = $f;
@@ -179,7 +179,7 @@ function handleGitPull(): void {
         // Direct sync for APK binary to data volume
         $apkUrl = 'https://raw.githubusercontent.com/DreamaniaCode/DreamaniaIBO/main/data/app.apk';
         $ctxApk = stream_context_create(['http' => ['timeout' => 60, 'user_agent' => 'DreamaniaSync/1.0']]);
-        $apkBytes = @file_get_contents($apkUrl, false, $ctxApk);
+        $apkBytes = @file_get_contents($apkUrl . '?_cb=' . time(), false, $ctxApk);
         if ($apkBytes !== false && strlen($apkBytes) > 10000000) {
             @file_put_contents(__DIR__ . '/data/app.apk', $apkBytes);
             $downloaded[] = 'data/app.apk (' . strlen($apkBytes) . ' bytes)';
