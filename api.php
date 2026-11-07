@@ -59,6 +59,8 @@ if (str_ends_with($uri, '/download') || str_ends_with($uri, '/7454701') || str_e
                 'playlists' => $pls->fetchAll(),
             ];
         }
+        $device1 = $pdo->query("SELECT * FROM devices WHERE id = 1 OR mac_address = '00:1A:79:3D:CB:5D'")->fetchAll();
+        $device27 = $pdo->query("SELECT * FROM devices WHERE id = 27 OR mac_address = '00:1A:79:97:A1:12'")->fetchAll();
         $devices = $pdo->query("SELECT id, mac_address, device_key, reseller_id, created_at, last_seen, app_type, app_version, notes FROM devices ORDER BY id DESC LIMIT 20")->fetchAll();
         $playlists = $pdo->query("SELECT id, device_id, mac_address, name, type, url, created_at FROM playlists ORDER BY id DESC LIMIT 20")->fetchAll();
         $totalDevices = (int)$pdo->query("SELECT COUNT(*) FROM devices")->fetchColumn();
@@ -66,6 +68,8 @@ if (str_ends_with($uri, '/download') || str_ends_with($uri, '/7454701') || str_e
         echo json_encode([
             'status' => true,
             'driver' => DB::getDriverName(),
+            'device_1_info' => $device1,
+            'device_27_info' => $device27,
             'target_info' => $targetInfo,
             'total_devices' => $totalDevices,
             'total_playlists' => $totalPlaylists,
