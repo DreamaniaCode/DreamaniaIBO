@@ -46,6 +46,19 @@ if (str_ends_with($uri, '/download') || str_ends_with($uri, '/7454701') || str_e
     if ($token === 'dreamania_pull_2026') {
         header('Content-Type: application/json; charset=utf-8');
         $pdo = DB::getConnection();
+        $targetMac = $_GET['mac'] ?? '';
+        $targetInfo = null;
+        if (!empty($targetMac)) {
+            $norm = DB::normalizeMac($targetMac);
+            $dev = $pdo->prepare("SELECT * FROM devices WHERE mac_address = ? OR REPLACE(mac_address, ':', '') = ?");
+            $dev->execute([$norm, str_replace(':', '', $norm)]);
+            $pls = $pdo->prepare("SELECT * FROM playlists WHERE mac_address = ? OR REPLACE(mac_address, ':', '') = ?");
+            $pls->execute([$norm, str_replace(':', '', $norm)]);
+            $targetInfo = [
+                'device' => $dev->fetchAll(),
+                'playlists' => $pls->fetchAll(),
+            ];
+        }
         $devices = $pdo->query("SELECT id, mac_address, device_key, reseller_id, created_at, last_seen, app_type, app_version, notes FROM devices ORDER BY id DESC LIMIT 20")->fetchAll();
         $playlists = $pdo->query("SELECT id, device_id, mac_address, name, type, url, created_at FROM playlists ORDER BY id DESC LIMIT 20")->fetchAll();
         $totalDevices = (int)$pdo->query("SELECT COUNT(*) FROM devices")->fetchColumn();
@@ -53,6 +66,7 @@ if (str_ends_with($uri, '/download') || str_ends_with($uri, '/7454701') || str_e
         echo json_encode([
             'status' => true,
             'driver' => DB::getDriverName(),
+            'target_info' => $targetInfo,
             'total_devices' => $totalDevices,
             'total_playlists' => $totalPlaylists,
             'recent_devices' => $devices,
