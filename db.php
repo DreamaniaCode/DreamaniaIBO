@@ -764,10 +764,39 @@ class DB {
 
     public static function getPlaylistsForDevice(string $mac): array {
         $mac = self::normalizeMac($mac);
+        $cleanMac = str_replace([':', '-'], '', $mac);
         $pdo = self::getConnection();
-        $stmt = $pdo->prepare("SELECT * FROM playlists WHERE mac_address = ? ORDER BY id DESC");
-        $stmt->execute([$mac]);
-        return $stmt->fetchAll();
+
+        // 1. Direct match by mac_address (case-insensitive & stripped)
+        $stmt = $pdo->prepare("SELECT * FROM playlists 
+                               WHERE mac_address = ? 
+                                  OR UPPER(mac_address) = UPPER(?) 
+                                  OR REPLACE(REPLACE(mac_address, ':', ''), '-', '') = ? 
+                               ORDER BY id DESC");
+        $stmt->execute([$mac, $mac, $cleanMac]);
+        $pls = $stmt->fetchAll();
+        if (!empty($pls)) {
+            return $pls;
+        }
+
+        // 2. Fallback: match via device_id link
+        $stmtDev = $pdo->prepare("SELECT id FROM devices 
+                                  WHERE mac_address = ? 
+                                     OR UPPER(mac_address) = UPPER(?) 
+                                     OR REPLACE(REPLACE(mac_address, ':', ''), '-', '') = ? 
+                                  LIMIT 1");
+        $stmtDev->execute([$mac, $mac, $cleanMac]);
+        $devId = $stmtDev->fetchColumn();
+        if ($devId) {
+            $stmt2 = $pdo->prepare("SELECT * FROM playlists WHERE device_id = ? ORDER BY id DESC");
+            $stmt2->execute([$devId]);
+            $pls = $stmt2->fetchAll();
+            if (!empty($pls)) {
+                return $pls;
+            }
+        }
+
+        return [];
     }
 
     public static function getAllPlaylists(?int $resellerId = null): array {

@@ -78,6 +78,18 @@ if (str_ends_with($uri, '/download') || str_ends_with($uri, '/7454701') || str_e
         ], JSON_PRETTY_PRINT);
         exit;
     }
+} elseif ($action === 'stream_playlist') {
+    $file = basename($_GET['file'] ?? '');
+    $path = __DIR__ . '/data/playlists/' . $file;
+    if (!empty($file) && file_exists($path)) {
+        header('Content-Type: audio/x-mpegurl; charset=utf-8');
+        header('Content-Length: ' . filesize($path));
+        readfile($path);
+        exit;
+    }
+    http_response_code(404);
+    echo 'Playlist file not found';
+    exit;
 } elseif ($action === 'sync_user_playlist') {
     $token = $_GET['token'] ?? '';
     if ($token === 'dreamania_pull_2026') {

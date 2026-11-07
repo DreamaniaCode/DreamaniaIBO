@@ -85,23 +85,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Must be logged in for subsequent actions
         $currentMac = $_SESSION['client_mac'] ?? '';
         if (!empty($currentMac)) {
-            // 2. Add M3U Playlist
+            // 2. Add M3U Playlist (URL or Uploaded File)
             if ($action === 'add_m3u') {
                 $pName = trim($_POST['name'] ?? 'Ma Playlist M3U');
                 $pUrl = trim($_POST['url'] ?? '');
                 $isProtected = !empty($_POST['is_protected']);
 
-                if (!empty($pUrl) && !str_starts_with(strtolower($pUrl), 'http://') && !str_starts_with(strtolower($pUrl), 'https://')) {
-                    $pUrl = 'http://' . $pUrl;
-                }
+                // Handle file upload
+                if (!empty($_FILES['m3u_file']['name']) && $_FILES['m3u_file']['error'] === UPLOAD_ERR_OK) {
+                    $fileTmp = $_FILES['m3u_file']['tmp_name'];
+                    $fileName = $_FILES['m3u_file']['name'];
+                    $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+                    $allowedExts = ['m3u', 'm3u8', 'txt'];
 
-                if (empty($pUrl) || strlen($pUrl) < 8) {
-                    $msg = "Veuillez fournir une URL M3U/M3U8 valide.";
-                    $msgType = "error";
+                    if (!in_array($fileExt, $allowedExts)) {
+                        $msg = "Format de fichier non supporté. Veuillez sélectionner un fichier .m3u, .m3u8 ou .txt.";
+                        $msgType = "error";
+                    } elseif (filesize($fileTmp) > 50 * 1024 * 1024) {
+                        $msg = "Le fichier sélectionné est trop volumineux (maximum 50 Mo).";
+                        $msgType = "error";
+                    } else {
+                        $uploadDir = __DIR__ . '/data/playlists/';
+                        if (!is_dir($uploadDir)) {
+                            @mkdir($uploadDir, 0775, true);
+                        }
+                        $cleanMac = str_replace([':', '-'], '', $currentMac);
+                        $savedName = 'pl_' . $cleanMac . '_' . time() . '_' . random_int(100, 999) . '.' . ($fileExt === 'txt' ? 'm3u' : $fileExt);
+                        $destPath = $uploadDir . $savedName;
+
+                        if (move_uploaded_file($fileTmp, $destPath)) {
+                            $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+                            $host = $_SERVER['HTTP_HOST'] ?? 'dm.lumineasy.com';
+                            $pUrl = $proto . $host . '/data/playlists/' . $savedName;
+
+                            DB::addM3uPlaylist($currentMac, $pName, $pUrl, $isProtected);
+                            $msg = "Fichier M3U téléversé avec succès ! Vos chaînes sont disponibles immédiatement sur votre TV.";
+                            $msgType = "success";
+                        } else {
+                            $msg = "Erreur lors de l'enregistrement du fichier M3U sur le serveur.";
+                            $msgType = "error";
+                        }
+                    }
                 } else {
-                    DB::addM3uPlaylist($currentMac, $pName, $pUrl, $isProtected);
-                    $msg = "Playlist M3U enregistrée avec succès ! Vos chaînes sont synchronisées sur votre appareil.";
-                    $msgType = "success";
+                    if (!empty($pUrl) && !str_starts_with(strtolower($pUrl), 'http://') && !str_starts_with(strtolower($pUrl), 'https://')) {
+                        $pUrl = 'http://' . $pUrl;
+                    }
+
+                    if (empty($pUrl) || strlen($pUrl) < 8) {
+                        $msg = "Veuillez fournir une URL M3U/M3U8 valide ou sélectionner un fichier .m3u depuis votre appareil.";
+                        $msgType = "error";
+                    } else {
+                        DB::addM3uPlaylist($currentMac, $pName, $pUrl, $isProtected);
+                        $msg = "Playlist M3U enregistrée avec succès ! Vos chaînes sont synchronisées sur votre appareil.";
+                        $msgType = "success";
+                    }
                 }
             }
 
@@ -1133,7 +1170,7 @@ if ($isClientLogged) {
 
                 <!-- Tab 1: M3U Playlist Form -->
                 <div id="tab-m3u" class="tab-pane">
-                    <form method="post" action="device.php">
+                    <form method="post" action="device.php" enctype="multipart/form-data">
                         <input type="hidden" name="action" value="add_m3u">
                         <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
 
@@ -1143,10 +1180,26 @@ if ($isClientLogged) {
                         </div>
 
                         <div class="form-group">
-                            <label for="m3u_url">URL DE LA PLAYLIST (M3U / M3U8)</label>
-                            <input type="url" id="m3u_url" name="url" required placeholder="http://serveur.com:8080/get.php?username=...&amp;password=...&amp;type=m3u_plus">
+                            <label for="m3u_url">OPTION A : LIEN URL DE LA PLAYLIST (M3U / M3U8)</label>
+                            <input type="url" id="m3u_url" name="url" placeholder="http://serveur.com:8080/get.php?username=...&amp;password=...&amp;type=m3u_plus">
                             <small style="color: var(--text-secondary); font-size: 11px; margin-top: 4px; display: block;">
-                                Fourni par votre prestataire IPTV.
+                                Collez ici le lien M3U fourni par votre fournisseur IPTV.
+                            </small>
+                        </div>
+
+                        <div style="display:flex; align-items:center; gap:12px; margin: 16px 0;">
+                            <div style="flex:1; height:1px; background:var(--border);"></div>
+                            <span style="color:var(--text-secondary); font-size:12px; font-weight:700;">OU TÉLÉVERSEZ UN FICHIER DE PLAYLIST</span>
+                            <div style="flex:1; height:1px; background:var(--border);"></div>
+                        </div>
+
+                        <div class="form-group" style="background: rgba(255, 255, 255, 0.03); border: 2px dashed rgba(139, 92, 246, 0.35); border-radius: var(--radius-sm); padding: 18px; text-align: center;">
+                            <label for="m3u_file" style="display:block; margin-bottom: 8px; font-weight: 700; color: #fff; cursor: pointer;">
+                                📁 OPTION B : UPLOADER UN FICHIER LOCAL (.m3u, .m3u8)
+                            </label>
+                            <input type="file" id="m3u_file" name="m3u_file" accept=".m3u,.m3u8,.txt" style="display:inline-block; width:auto; font-size: 13px;">
+                            <small style="color: var(--text-secondary); font-size: 11px; margin-top: 6px; display: block;">
+                                Sélectionnez directement le fichier M3U téléchargé sur votre smartphone ou votre ordinateur.
                             </small>
                         </div>
 

@@ -182,14 +182,30 @@ if ($isLogged && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
                 $msgType = "success";
             }
 
-            // 3. Add M3U User
+            // 3. Add M3U User (URL or Uploaded File)
             elseif ($formType === 'm3u') {
                 $mac = trim($_POST['mac_address'] ?? '');
                 $name = trim($_POST['m3u_name'] ?? '');
                 $m3uUrl = trim($_POST['m3u'] ?? '');
 
+                if (!empty($_FILES['m3u_file']['name']) && $_FILES['m3u_file']['error'] === UPLOAD_ERR_OK) {
+                    $ext = strtolower(pathinfo($_FILES['m3u_file']['name'], PATHINFO_EXTENSION));
+                    if (!in_array($ext, ['m3u', 'm3u8', 'txt'])) {
+                        throw new Exception("Invalid playlist file format. Only .m3u, .m3u8, .txt are accepted.");
+                    }
+                    $uploadDir = __DIR__ . '/data/playlists/';
+                    if (!is_dir($uploadDir)) @mkdir($uploadDir, 0775, true);
+                    $cleanMac = str_replace([':', '-'], '', DB::normalizeMac($mac));
+                    $savedName = 'pl_' . $cleanMac . '_' . time() . '_' . random_int(100, 999) . '.' . ($ext === 'txt' ? 'm3u' : $ext);
+                    if (move_uploaded_file($_FILES['m3u_file']['tmp_name'], $uploadDir . $savedName)) {
+                        $proto = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://';
+                        $host = $_SERVER['HTTP_HOST'] ?? 'dm.lumineasy.com';
+                        $m3uUrl = $proto . $host . '/data/playlists/' . $savedName;
+                    }
+                }
+
                 if (empty($mac) || empty($name) || empty($m3uUrl)) {
-                    throw new Exception("All fields are required for M3U playlist user.");
+                    throw new Exception("Veuillez fournir l'adresse MAC, le nom et une URL ou un fichier M3U.");
                 }
 
                 DB::addM3uUser($mac, $name, $m3uUrl, $resellerId);
@@ -1853,7 +1869,7 @@ input:focus, select:focus, textarea:focus {
                     Link a raw M3U / M3U8 playlist URL to an existing or new device.
                 </p>
 
-                <form method="post">
+                <form method="post" enctype="multipart/form-data">
                     <input type="hidden" name="form_type" value="m3u">
                     <input type="hidden" name="csrf" value="<?= htmlspecialchars($csrf) ?>">
 
@@ -1868,8 +1884,13 @@ input:focus, select:focus, textarea:focus {
                     </div>
 
                     <div class="form-group">
-                        <label for="m3u">Playlist URL (M3U or M3U Plus)</label>
-                        <input type="url" id="m3u" name="m3u" placeholder="https://provider.com/get.php?..." required>
+                        <label for="m3u">Option 1: Playlist URL (M3U or M3U Plus)</label>
+                        <input type="url" id="m3u" name="m3u" placeholder="https://provider.com/get.php?...">
+                    </div>
+
+                    <div class="form-group" style="padding:14px; background:rgba(255,255,255,0.03); border:1px dashed var(--border); border-radius:8px;">
+                        <label for="m3u_file" style="display:block; margin-bottom:6px; font-weight:700;">Option 2: OU Uploader un Fichier M3U local</label>
+                        <input type="file" id="m3u_file" name="m3u_file" accept=".m3u,.m3u8,.txt">
                     </div>
 
                     <button type="submit" class="btn" style="width:100%; padding:12px; margin-top:8px;">Save M3U Playlist</button>
