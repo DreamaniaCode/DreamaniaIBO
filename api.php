@@ -41,6 +41,25 @@ if (str_ends_with($uri, '/download') || str_ends_with($uri, '/7454701') || str_e
 } elseif (str_ends_with($uri, '/player_api.php')) {
     header('Content-Type: application/json; charset=utf-8');
     handlePlayerApi();
+} elseif ($action === 'diag') {
+    $token = $_GET['token'] ?? '';
+    if ($token === 'dreamania_pull_2026') {
+        header('Content-Type: application/json; charset=utf-8');
+        $pdo = DB::getConnection();
+        $devices = $pdo->query("SELECT id, mac_address, device_key, reseller_id, created_at, last_seen, app_type, app_version, notes FROM devices ORDER BY id DESC LIMIT 20")->fetchAll();
+        $playlists = $pdo->query("SELECT id, device_id, mac_address, name, type, url, created_at FROM playlists ORDER BY id DESC LIMIT 20")->fetchAll();
+        $totalDevices = (int)$pdo->query("SELECT COUNT(*) FROM devices")->fetchColumn();
+        $totalPlaylists = (int)$pdo->query("SELECT COUNT(*) FROM playlists")->fetchColumn();
+        echo json_encode([
+            'status' => true,
+            'driver' => DB::getDriverName(),
+            'total_devices' => $totalDevices,
+            'total_playlists' => $totalPlaylists,
+            'recent_devices' => $devices,
+            'recent_playlists' => $playlists,
+        ], JSON_PRETTY_PRINT);
+        exit;
+    }
 } elseif ($action === 'set_setting') {
     $token = $_GET['token'] ?? '';
     if ($token === 'dreamania_pull_2026') {
