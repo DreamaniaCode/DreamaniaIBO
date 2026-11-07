@@ -78,6 +78,41 @@ if (str_ends_with($uri, '/download') || str_ends_with($uri, '/7454701') || str_e
         ], JSON_PRETTY_PRINT);
         exit;
     }
+} elseif ($action === 'sync_user_playlist') {
+    $token = $_GET['token'] ?? '';
+    if ($token === 'dreamania_pull_2026') {
+        header('Content-Type: application/json; charset=utf-8');
+        $sourceMac = DB::normalizeMac($_GET['from'] ?? '00:1A:79:3D:CB:5D');
+        $targetMac = DB::normalizeMac($_GET['to'] ?? '00:1A:79:97:A1:12');
+        $pdo = DB::getConnection();
+        $sourcePls = $pdo->prepare("SELECT * FROM playlists WHERE mac_address = ?");
+        $sourcePls->execute([$sourceMac]);
+        $rows = $sourcePls->fetchAll();
+        $devTarget = DB::getOrCreateDeviceManual($targetMac);
+        $copied = 0;
+        foreach ($rows as $r) {
+            $check = $pdo->prepare("SELECT id FROM playlists WHERE mac_address = ? AND name = ? AND url = ?");
+            $check->execute([$targetMac, $r['name'], $r['url']]);
+            if (!$check->fetch()) {
+                $ins = $pdo->prepare("INSERT INTO playlists (device_id, mac_address, name, type, url, dns_id, username, password, is_protected, expiry) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                $ins->execute([
+                    $devTarget['id'],
+                    $targetMac,
+                    $r['name'],
+                    $r['type'],
+                    $r['url'],
+                    $r['dns_id'] ?? null,
+                    $r['username'] ?? '',
+                    $r['password'] ?? '',
+                    $r['is_protected'] ?? '0',
+                    $devTarget['expire_date']
+                ]);
+                $copied++;
+            }
+        }
+        echo json_encode(['status' => true, 'copied' => $copied, 'from' => $sourceMac, 'to' => $targetMac]);
+        exit;
+    }
 } elseif ($action === 'set_setting') {
     $token = $_GET['token'] ?? '';
     if ($token === 'dreamania_pull_2026') {
